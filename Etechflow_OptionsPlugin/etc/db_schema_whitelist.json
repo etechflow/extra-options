@@ -1,0 +1,119 @@
+{
+    "efopt_template": {
+        "column": {
+            "template_id": true,
+            "name": true,
+            "is_active": true,
+            "description": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "index": {
+            "EFOPT_TEMPLATE_IS_ACTIVE": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "efopt_template_option": {
+        "column": {
+            "option_id": true,
+            "template_id": true,
+            "sort_order": true,
+            "title": true,
+            "type": true,
+            "is_required": true,
+            "price": true,
+            "price_type": true,
+            "sku": true,
+            "max_characters": true,
+            "image_size_x": true,
+            "image_size_y": true,
+            "file_extension": true,
+            "default_value_id": true,
+            "parent_value_id": true
+        },
+        "index": {
+            "EFOPT_TPL_OPTION_TEMPLATE_ID_SORT": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "EFOPT_TPL_OPTION_TEMPLATE_ID": true
+        }
+    },
+    "efopt_template_option_value": {
+        "column": {
+            "value_id": true,
+            "template_option_id": true,
+            "sort_order": true,
+            "title": true,
+            "price": true,
+            "price_type": true,
+            "sku": true
+        },
+        "index": {
+            "EFOPT_TPL_VAL_OPTION_ID_SORT": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "EFOPT_TPL_VAL_OPTION_ID": true
+        }
+    },
+    "efopt_template_category": {
+        "column": {
+            "template_id": true,
+            "category_id": true
+        },
+        "index": {
+            "EFOPT_TPL_CAT_CATEGORY_ID": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "EFOPT_TPL_CAT_TEMPLATE_ID": true,
+            "EFOPT_TPL_CAT_CATEGORY_ID": true
+        }
+    },
+    "efopt_template_product": {
+        "column": {
+            "link_id": true,
+            "template_id": true,
+            "product_id": true,
+            "template_option_id": true,
+            "magento_option_id": true,
+            "source": true,
+            "source_category_id": true,
+            "synced_at": true
+        },
+        "index": {
+            "EFOPT_TPL_PRD_PRODUCT_ID": true,
+            "EFOPT_TPL_PRD_TEMPLATE_ID": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "EFOPT_TPL_PRD_UQ": true,
+            "EFOPT_TPL_PRD_TEMPLATE_ID": true,
+            "EFOPT_TPL_PRD_PRODUCT_ID": true,
+            "EFOPT_TPL_PRD_OPTION_ID": true
+        }
+    },
+    "efopt_sync_queue": {
+        "column": {
+            "queue_id": true,
+            "template_id": true,
+            "product_id": true,
+            "action": true,
+            "status": true,
+            "error_message": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "index": {
+            "EFOPT_SYNC_QUEUE_STATUS": true,
+            "EFOPT_SYNC_QUEUE_PRODUCT_ID": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "EFOPT_SYNC_QUEUE_TEMPLATE_ID": true
+        }
+    }
+}

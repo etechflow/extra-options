@@ -1,0 +1,33 @@
+<?php
+/** @var \Magento\Backend\Block\Template $block */
+/** @var \Magento\Framework\Escaper $escaper */
+$runUrl = $block->getUrl('efopt/migration/run');
+?>
+<style>
+.efopt-mig-card{background:#fff;border:1px solid #e3e3e3;border-radius:6px;padding:18px;margin-bottom:18px}
+.efopt-mig-card h3{margin:0 0 10px}
+.efopt-mig-card ol{padding-left:20px;line-height:1.8}
+.efopt-mig-card .warning{background:#fff3cd;border:1px solid #ffeeba;padding:10px;border-radius:4px;color:#856404;margin-top:10px}
+</style>
+
+<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-left:4px solid #0535F5;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem;font-size:12.5px;line-height:1.55;color:#1F2937">
+    <p style="margin:0 0 .35rem 0;font-weight:700;color:#0535F5"><?= $escaper->escapeHtml(__('How the migration works')) ?></p>
+    <ol style="margin:0;padding-left:1.25rem">
+        <li><strong><?= $escaper->escapeHtml(__('Backup:')) ?></strong> <?= $escaper->escapeHtml(__('every catalog_product_option + value row is dumped to var/efopt/migration-backup-{timestamp}.sql so you can restore if needed.')) ?></li>
+        <li><strong><?= $escaper->escapeHtml(__('Group:')) ?></strong> <?= $escaper->escapeHtml(__('products are grouped by the structure of their custom options (title + type + value-count signature).')) ?></li>
+        <li><strong><?= $escaper->escapeHtml(__('Build templates:')) ?></strong> <?= $escaper->escapeHtml(__('one template per distinct option-set, named "Migrated: N option(s) — first title".')) ?></li>
+        <li><strong><?= $escaper->escapeHtml(__('Link:')) ?></strong> <?= $escaper->escapeHtml(__('every matched product gets a row in efopt_template_product pointing to its existing catalog_product_option (no new options are created).')) ?></li>
+    </ol>
+    <p style="margin:.4rem 0 0 0;font-size:11.5px;color:#6B7280"><?= $escaper->escapeHtml(__('Idempotent — re-running won\'t duplicate templates unless signatures change. The keyword-config fallback remains active and no catalog_product_option rows are modified.')) ?></p>
+</div>
+
+<div class="efopt-mig-card">
+    <h3><?= $escaper->escapeHtml(__('Run migration')) ?></h3>
+    <form method="post" action="<?= $escaper->escapeUrl($runUrl) ?>">
+        <?= $block->getBlockHtml('formkey') ?>
+        <button type="submit" class="action-primary"
+                onclick="return confirm('<?= $escaper->escapeJs(__('Run migration now? Backup will be created automatically.')) ?>');">
+            <?= $escaper->escapeHtml(__('Start Migration')) ?>
+        </button>
+    </form>
+</div>

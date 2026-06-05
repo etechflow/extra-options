@@ -1,0 +1,50 @@
+/* Etechflow_OptionsPlugin — admin styles
+ * Consolidated from inline <style> blocks. Loaded via layout XML on:
+ *   efopt_templates_edit, efopt_templates_new,
+ *   efopt_bulkprice_index, efopt_migration_index.
+ * Deployed to pub/static/adminhtml/Magento/backend/<locale>/Etechflow_OptionsPlugin/css/
+ */
+
+/* ---- Templates Edit form ---- */
+.efopt-card{background:#fff;border:1px solid #e3e3e3;border-radius:6px;padding:18px 20px;margin-bottom:18px}
+.efopt-card h3{margin:0 0 12px;font-weight:600;color:#41362f;font-size:16px}
+.efopt-card h3 .efopt-sub{font-weight:400;color:#777;font-size:13px;margin-left:8px}
+.efopt-field-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.efopt-field-row label{flex:0 0 180px;color:#41362f;font-size:13px}
+.efopt-field-row input[type=text],.efopt-field-row textarea,.efopt-field-row select{flex:1;padding:6px 10px;border:1px solid #ccc;border-radius:3px;background:#fff}
+.efopt-field-row textarea{min-height:60px}
+.efopt-options-table{width:100%;border-collapse:collapse}
+.efopt-options-table th,.efopt-options-table td{padding:6px 8px;border-bottom:1px solid #eee;vertical-align:top;text-align:left}
+.efopt-options-table th{background:#f5f5f5;font-weight:600;font-size:12px;text-transform:uppercase;color:#666}
+.efopt-options-table input[type=text],.efopt-options-table input[type=number],.efopt-options-table select{padding:4px 6px;border:1px solid #ccc;border-radius:3px;width:100%;box-sizing:border-box}
+.efopt-options-table .col-narrow{width:80px}
+.efopt-options-table .col-actions{width:70px;text-align:center}
+.efopt-options-table .col-title{min-width:200px}
+.efopt-values-table{margin-top:4px;width:100%;border-collapse:collapse;background:#fafafa}
+.efopt-values-table th,.efopt-values-table td{padding:3px 6px;border-bottom:1px dashed #ddd;font-size:12px}
+.efopt-add-btn{background:#0072c6;color:#fff;border:none;padding:6px 12px;border-radius:3px;cursor:pointer;font-size:12px}
+.efopt-add-btn:hover{background:#005a9e}
+.efopt-del-btn{background:#c00;color:#fff;border:none;padding:3px 7px;border-radius:3px;cursor:pointer;font-size:11px}
+.efopt-del-btn:hover{background:#a00}
+.efopt-products-table{width:100%;border-collapse:collapse;margin-top:8px}
+.efopt-products-table th,.efopt-products-table td{padding:5px 8px;border-bottom:1px solid #eee;font-size:12px}
+.efopt-products-table th{background:#f5f5f5;font-weight:600;text-transform:uppercase;color:#666}
+.efopt-tag{display:inline-block;padding:2px 8px;border-radius:10px;background:#e7f0fb;color:#1a5490;font-size:11px;font-weight:600}
+.efopt-tag.category{background:#fff3cd;color:#856404}
+
+/* ---- Bulk Price Update form ---- */
+.efopt-bulk-card{background:#fff;border:1px solid #e3e3e3;border-radius:6px;padding:16px;margin-bottom:18px}
+.efopt-bulk-card h3{margin:0 0 10px;font-weight:600}
+.efopt-bulk-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.efopt-bulk-grid label{display:block;font-size:13px;color:#41362f;margin-bottom:4px}
+.efopt-bulk-grid select[multiple]{min-height:180px;width:100%}
+.efopt-bulk-table{width:100%;border-collapse:collapse;margin-top:8px}
+.efopt-bulk-table th,.efopt-bulk-table td{padding:6px 8px;border-bottom:1px solid #eee;text-align:left}
+.efopt-bulk-table input[type=number]{width:120px}
+.efopt-bulk-option-row{background:#f7f7f7;font-weight:600}
+
+/* ---- Migration wizard ---- */
+.efopt-mig-card{background:#fff;border:1px solid #e3e3e3;border-radius:6px;padding:18px;margin-bottom:18px}
+.efopt-mig-card h3{margin:0 0 10px}
+.efopt-mig-card ol{padding-left:20px;line-height:1.8}
+.efopt-mig-card .warning{background:#fff3cd;border:1px solid #ffeeba;padding:10px;border-radius:4px;color:#856404;margin-top:10px}

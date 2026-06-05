@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Catalog\Model\Product\Type\Simple">
+        <plugin name="etechflow_options_conditional_required_simple" type="Etechflow\OptionsPlugin\Plugin\ConditionalRequired" sortOrder="5"/>
+    </type>
+    <type name="Magento\Catalog\Model\Product\Type\Virtual">
+        <plugin name="etechflow_options_conditional_required_virtual" type="Etechflow\OptionsPlugin\Plugin\ConditionalRequired" sortOrder="5"/>
+    </type>
+</config>

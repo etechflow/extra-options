@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="etechflow" translate="label" sortOrder="200">
+            <label>eTechFlow</label>
+        </tab>
+        <section id="etechflow_options"
+                 translate="label"
+                 type="text"
+                 sortOrder="10"
+                 showInDefault="1"
+                 showInWebsite="1"
+                 showInStore="1">
+            <label>Extra Options Plugin</label>
+            <tab>etechflow</tab>
+            <resource>Etechflow_OptionsPlugin::config</resource>
+
+            <group id="general" translate="label" type="text" sortOrder="10"
+                   showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General</label>
+
+                <field id="enabled" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Module</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Master switch for the entire module.</comment>
+                </field>
+            </group>
+
+            <group id="file_options" translate="label" type="text" sortOrder="20"
+                   showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>File Upload Behaviour</label>
+
+                <field id="soft_required" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Soft-Required File Options</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[When <strong>Yes</strong>, customers can add a product to cart even if a file-type custom option is empty. Fixes Magento's hard "required option(s) weren't entered" error for file uploads.]]></comment>
+                </field>
+
+                <field id="log_relaxed" translate="label comment" type="select" sortOrder="20"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Log Relaxed File Validations</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Write a debug line to var/log/system.log every time a file requirement is relaxed.</comment>
+                    <depends>
+                        <field id="soft_required">1</field>
+                    </depends>
+                </field>
+            </group>
+
+            <group id="smart_card" translate="label" type="text" sortOrder="30"
+                   showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Frontend Radio-Card</label>
+                <comment><![CDATA[Used when a product page has a primary radio/dropdown option with related code/image inputs (e.g. "Would you like us to cut this?"). The frontend groups these into a single radio card. Manage option SETS centrally via <strong>eTechFlow &rarr; Option Templates</strong>.]]></comment>
+
+                <field id="default_choice" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Default Selected Choice</label>
+                    <source_model>Etechflow\OptionsPlugin\Model\Source\DefaultChoice</source_model>
+                    <comment>Which radio is preselected on PDP load. <strong>None</strong> = customer must actively pick.</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

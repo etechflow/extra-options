@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <etechflow_options>
+            <general>
+                <enabled>1</enabled>
+                <mode>standard</mode>
+            </general>
+            <file_options>
+                <soft_required>1</soft_required>
+                <log_relaxed>0</log_relaxed>
+            </file_options>
+            <smart_card>
+                <default_choice></default_choice>
+                <show_all_inputs>1</show_all_inputs>
+                <primary_keywords>would you like,cut this,cut it</primary_keywords>
+                <none_keywords>no thanks,cut it myself,self,none</none_keywords>
+                <code_keywords>cut from code,from code,code i supply</code_keywords>
+                <image_keywords>cut from image,from image,image i supply,upload image</image_keywords>
+                <code_input_keywords>key code,enter code,enter the code</code_input_keywords>
+                <image_input_keywords>upload image,image of key,upload photo,upload picture</image_input_keywords>
+                <extra_input_keywords>registration,reg number,enter reg,vehicle reg</extra_input_keywords>
+            </smart_card>
+            <fields>
+                <primary_title_override></primary_title_override>
+                <primary_help_text></primary_help_text>
+
+                <none_label_override></none_label_override>
+                <code_choice_label_override></code_choice_label_override>
+                <image_choice_label_override></image_choice_label_override>
+
+                <code_input_title_override></code_input_title_override>
+                <code_input_type>text</code_input_type>
+                <code_input_placeholder></code_input_placeholder>
+                <code_input_help></code_input_help>
+                <code_input_max_length>0</code_input_max_length>
+
+                <image_input_title_override></image_input_title_override>
+                <image_input_placeholder></image_input_placeholder>
+                <image_input_help></image_input_help>
+                <image_input_accept></image_input_accept>
+
+                <extra_input_title_override></extra_input_title_override>
+                <extra_input_type>text</extra_input_type>
+                <extra_input_placeholder></extra_input_placeholder>
+                <extra_input_help></extra_input_help>
+                <extra_input_max_length>0</extra_input_max_length>
+            </fields>
+        </etechflow_options>
+    </default>
+</config>

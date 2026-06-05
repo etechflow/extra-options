@@ -1,0 +1,114 @@
+<?php
+/** @var \Etechflow\OptionsPlugin\Block\Adminhtml\BulkPrice\Form $block */
+/** @var \Magento\Framework\Escaper $escaper */
+$templates = $block->getActiveTemplates();
+$selectedId = $block->getSelectedTemplateId();
+$breakdown = $block->getTemplateBreakdown($selectedId);
+$categories = $block->getCategoryOptions();
+?>
+<style>
+.efopt-bulk-card{background:#fff;border:1px solid #e3e3e3;border-radius:6px;padding:16px;margin-bottom:18px}
+.efopt-bulk-card h3{margin:0 0 10px;font-weight:600}
+.efopt-bulk-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.efopt-bulk-grid label{display:block;font-size:13px;color:#41362f;margin-bottom:4px}
+.efopt-bulk-grid select[multiple]{min-height:180px;width:100%}
+.efopt-bulk-table{width:100%;border-collapse:collapse;margin-top:8px}
+.efopt-bulk-table th,.efopt-bulk-table td{padding:6px 8px;border-bottom:1px solid #eee;text-align:left}
+.efopt-bulk-table input[type=number]{width:120px}
+.efopt-bulk-option-row{background:#f7f7f7;font-weight:600}
+</style>
+
+<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-left:4px solid #0535F5;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem;font-size:12.5px;line-height:1.55;color:#1F2937">
+    <p style="margin:0 0 .35rem 0;font-weight:700;color:#0535F5"><?= $escaper->escapeHtml(__('How to use Bulk Price Update')) ?></p>
+    <ol style="margin:0;padding-left:1.25rem">
+        <li><strong><?= $escaper->escapeHtml(__('Step 1 — Pick a template:')) ?></strong> <?= $escaper->escapeHtml(__('select the template whose option/value prices you want to change.')) ?></li>
+        <li><strong><?= $escaper->escapeHtml(__('Step 2 — Pick scope:')) ?></strong> <?= $escaper->escapeHtml(__('choose target categories AND/OR comma-separated product IDs. Only products in this scope that ALSO have the template linked will be updated.')) ?></li>
+        <li><strong><?= $escaper->escapeHtml(__('Step 3 — Edit prices:')) ?></strong> <?= $escaper->escapeHtml(__('enter new prices for option-values. Leave blank to keep current. Click Apply.')) ?></li>
+    </ol>
+    <p style="margin:.4rem 0 0 0;font-size:11.5px;color:#6B7280"><?= $escaper->escapeHtml(__('Tip: the template values themselves are also updated, so future syncs will use the new prices automatically.')) ?></p>
+</div>
+
+<form action="<?= $escaper->escapeUrl($block->getFormAction()) ?>" method="post">
+    <?= $block->getBlockHtml('formkey') ?>
+
+    <div class="efopt-bulk-card">
+        <h3><?= $escaper->escapeHtml(__('1. Pick a template')) ?></h3>
+        <select name="template_id" onchange="this.form.action='<?= $escaper->escapeUrl($block->getUrl('efopt/bulkprice/index')) ?>?template_id='+this.value;this.form.method='get';this.form.submit();">
+            <option value=""><?= $escaper->escapeHtml(__('— Select a template —')) ?></option>
+            <?php foreach ($templates as $tpl): ?>
+                <option value="<?= (int)$tpl['template_id'] ?>" <?= $tpl['template_id'] === $selectedId ? 'selected' : '' ?>>
+                    <?= $escaper->escapeHtml($tpl['name']) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <?php if ($selectedId && $breakdown): ?>
+        <div class="efopt-bulk-card">
+            <h3><?= $escaper->escapeHtml(__('2. Pick scope (categories AND/OR products that have this template synced)')) ?></h3>
+            <div class="efopt-bulk-grid">
+                <div>
+                    <label><?= $escaper->escapeHtml(__('Categories')) ?></label>
+                    <select name="category_ids[]" multiple>
+                        <?php foreach ($categories as $cid => $label): ?>
+                            <option value="<?= (int)$cid ?>"><?= $escaper->escapeHtml($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small><?= $escaper->escapeHtml(__('Hold Ctrl/Cmd to select multiple. All products in selected categories that have this template synced will be updated.')) ?></small>
+                </div>
+                <div>
+                    <label><?= $escaper->escapeHtml(__('Or specific product IDs (comma-separated)')) ?></label>
+                    <input type="text" name="product_ids_csv" placeholder="<?= $escaper->escapeHtmlAttr(__('e.g. 123, 456, 789')) ?>" style="width:100%;padding:6px" onblur="this.form.querySelectorAll('input.efopt-product-id').forEach(function(el){el.remove();});this.value.split(',').forEach(function(v){v=v.trim();if(v){var i=document.createElement('input');i.type='hidden';i.name='product_ids[]';i.value=v;i.className='efopt-product-id';this.form.appendChild(i);}}.bind(this));">
+                    <small><?= $escaper->escapeHtml(__('Use this when you want to target specific products, not whole categories.')) ?></small>
+                </div>
+            </div>
+        </div>
+
+        <div class="efopt-bulk-card">
+            <h3><?= $escaper->escapeHtml(__('3. New prices')) ?></h3>
+            <table class="efopt-bulk-table">
+                <thead>
+                    <tr>
+                        <th><?= $escaper->escapeHtml(__('Option / Value')) ?></th>
+                        <th><?= $escaper->escapeHtml(__('Type')) ?></th>
+                        <th><?= $escaper->escapeHtml(__('New Price')) ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($breakdown as $opt): ?>
+                    <tr class="efopt-bulk-option-row">
+                        <td><?= $escaper->escapeHtml($opt['title']) ?></td>
+                        <td><?= $escaper->escapeHtml($opt['type']) ?></td>
+                        <td>
+                            <?php if (in_array($opt['type'], ['field','area','file','date','date_time','time'], true)): ?>
+                                <input type="number" step="0.01"
+                                       name="option_prices[<?= (int)$opt['option_id'] ?>]"
+                                       value="<?= $opt['price'] !== null ? $escaper->escapeHtmlAttr((string)$opt['price']) : '' ?>"
+                                       placeholder="—">
+                            <?php else: ?>
+                                <span style="color:#999;font-size:12px"><?= $escaper->escapeHtml(__('see values below')) ?></span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php foreach ($opt['values'] as $val): ?>
+                        <tr>
+                            <td style="padding-left:30px">↳ <?= $escaper->escapeHtml($val['title']) ?></td>
+                            <td></td>
+                            <td>
+                                <input type="number" step="0.01"
+                                       name="value_prices[<?= (int)$val['value_id'] ?>]"
+                                       value="<?= $escaper->escapeHtmlAttr((string)$val['price']) ?>">
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            <p style="margin-top:14px">
+                <button type="submit" class="action-primary"><?= $escaper->escapeHtml(__('Apply Bulk Update')) ?></button>
+            </p>
+        </div>
+    <?php elseif ($selectedId): ?>
+        <p style="color:#a00"><?= $escaper->escapeHtml(__('This template has no options yet. Edit it first under Option Templates.')) ?></p>
+    <?php endif; ?>
+</form>

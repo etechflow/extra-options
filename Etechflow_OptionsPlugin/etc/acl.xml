@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Acl/etc/acl.xsd">
+    <acl>
+        <resources>
+            <resource id="Magento_Backend::admin">
+                <!-- Top-level menu resource (its own tree, not under Catalog or Stores) -->
+                <resource id="Etechflow_OptionsPlugin::root"
+                          title="eTechFlow"
+                          sortOrder="200">
+                    <resource id="Etechflow_OptionsPlugin::templates"
+                              title="Option Templates"
+                              sortOrder="10">
+                        <resource id="Etechflow_OptionsPlugin::templates_save"
+                                  title="Save Template"
+                                  sortOrder="10"/>
+                        <resource id="Etechflow_OptionsPlugin::templates_delete"
+                                  title="Delete Template"
+                                  sortOrder="20"/>
+                        <resource id="Etechflow_OptionsPlugin::templates_apply"
+                                  title="Sync Template To Products"
+                                  sortOrder="30"/>
+                    </resource>
+                    <resource id="Etechflow_OptionsPlugin::bulk_price"
+                              title="Bulk Price Update"
+                              sortOrder="20"/>
+                    <resource id="Etechflow_OptionsPlugin::migration"
+                              title="Migration Tool"
+                              sortOrder="30"/>
+                </resource>
+
+                <!-- Existing Stores → Configuration → eTechFlow resource (unchanged) -->
+                <resource id="Magento_Backend::stores">
+                    <resource id="Magento_Backend::stores_settings">
+                        <resource id="Magento_Config::config">
+                            <resource id="Etechflow_OptionsPlugin::config"
+                                      title="Etechflow Options Plugin"
+                                      sortOrder="100"/>
+                        </resource>
+                    </resource>
+                </resource>
+            </resource>
+        </resources>
+    </acl>
+</config>

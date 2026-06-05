@@ -1,0 +1,14 @@
+<?php
+/** @var \Magento\Framework\View\Element\Template $block */
+/** @var \Magento\Framework\Escaper $escaper */
+/** @var \Etechflow\OptionsPlugin\ViewModel\OptionDefaults $vm */
+$vm = $block->getData('view_model');
+if (!$vm) { return; }
+
+$defaults = $vm->getDefaults();
+$jsSrc = $block->getViewFileUrl('Etechflow_OptionsPlugin::js/efopt-live-price.js');
+?>
+<script>
+    window.efoptTemplateDefaults = <?= /* @noEscape */ json_encode((object) $defaults) ?>;
+</script>
+<script src="<?= $escaper->escapeUrl($jsSrc) ?>" defer></script>

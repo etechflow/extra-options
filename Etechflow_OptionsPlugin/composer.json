@@ -1,0 +1,42 @@
+{
+    "name": "etechflow/module-options-plugin",
+    "description": "EtechFlow Extra Options for Magento 2 — admin Templates UI (Amasty-Prot style + better), per-category apply, bulk price update page, migration tool from keyword config, conditional-required cut-image / cut-code validation, multi-file image upload (up to 10 files per option), Hyvä + Luma compatible.",
+    "type": "magento2-module",
+    "license": "proprietary",
+    "version": "2.0.0",
+    "keywords": [
+        "magento",
+        "magento2",
+        "custom-options",
+        "product-options",
+        "templates",
+        "image-upload",
+        "hyva",
+        "luma",
+        "etechflow"
+    ],
+    "authors": [
+        {
+            "name": "EtechFlow",
+            "email": "etechflow0@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "magento/framework": ">=103.0",
+        "magento/module-catalog": ">=104.0",
+        "magento/module-checkout": ">=100.4",
+        "magento/module-sales": ">=103.0",
+        "magento/module-store": ">=101.0",
+        "magento/module-config": ">=101.0",
+        "magento/module-backend": ">=102.0",
+        "magento/module-ui": ">=101.0",
+        "magento/module-quote": ">=101.0"
+    },
+    "autoload": {
+        "files": ["registration.php"],
+        "psr-4": {
+            "Etechflow\\OptionsPlugin\\": ""
+        }
+    }
+}

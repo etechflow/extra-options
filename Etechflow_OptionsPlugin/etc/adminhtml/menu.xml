@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <!-- Top-level "eTechFlow" entry on the admin sidebar. Parent nodes
+             MUST NOT have an action attribute (Magento's menu validator
+             rejects action="" with "less than 3 characters"). -->
+        <add id="Etechflow_OptionsPlugin::root"
+             title="eTechFlow"
+             module="Etechflow_OptionsPlugin"
+             sortOrder="200"
+             resource="Etechflow_OptionsPlugin::root"/>
+
+        <add id="Etechflow_OptionsPlugin::templates"
+             title="Option Templates"
+             module="Etechflow_OptionsPlugin"
+             parent="Etechflow_OptionsPlugin::root"
+             sortOrder="10"
+             resource="Etechflow_OptionsPlugin::templates"
+             action="efopt/templates/index"/>
+
+        <add id="Etechflow_OptionsPlugin::bulk_price"
+             title="Bulk Price Update"
+             module="Etechflow_OptionsPlugin"
+             parent="Etechflow_OptionsPlugin::root"
+             sortOrder="20"
+             resource="Etechflow_OptionsPlugin::bulk_price"
+             action="efopt/bulkprice/index"/>
+
+        <add id="Etechflow_OptionsPlugin::migration"
+             title="Migration Tool"
+             module="Etechflow_OptionsPlugin"
+             parent="Etechflow_OptionsPlugin::root"
+             sortOrder="30"
+             resource="Etechflow_OptionsPlugin::migration"
+             action="efopt/migration/index"/>
+    </menu>
+</config>

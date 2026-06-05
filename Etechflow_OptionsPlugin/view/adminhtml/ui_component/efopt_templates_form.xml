@@ -1,0 +1,211 @@
+<?xml version="1.0"?>
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">efopt_templates_form.efopt_templates_form_data_source</item>
+        </item>
+        <item name="label" xsi:type="string" translate="true">Template Information</item>
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+    </argument>
+
+    <settings>
+        <buttons>
+            <button name="back" class="Etechflow\OptionsPlugin\Block\Adminhtml\Template\Edit\BackButton"/>
+            <button name="delete" class="Etechflow\OptionsPlugin\Block\Adminhtml\Template\Edit\DeleteButton"/>
+            <button name="apply_now" class="Etechflow\OptionsPlugin\Block\Adminhtml\Template\Edit\ApplyNowButton"/>
+            <button name="save" class="Etechflow\OptionsPlugin\Block\Adminhtml\Template\Edit\SaveButton"/>
+            <button name="save_and_continue" class="Etechflow\OptionsPlugin\Block\Adminhtml\Template\Edit\SaveAndContinueButton"/>
+        </buttons>
+        <namespace>efopt_templates_form</namespace>
+        <dataScope>data</dataScope>
+        <deps>
+            <dep>efopt_templates_form.efopt_templates_form_data_source</dep>
+        </deps>
+    </settings>
+
+    <dataSource name="efopt_templates_form_data_source">
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+        <settings>
+            <submitUrl path="*/*/save"/>
+        </settings>
+        <dataProvider name="efopt_templates_form_data_source"
+                      class="Etechflow\OptionsPlugin\Ui\DataProvider\TemplateFormDataProvider">
+            <settings>
+                <requestFieldName>template_id</requestFieldName>
+                <primaryFieldName>template_id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         General fieldset — name, status, description
+         ═══════════════════════════════════════════════════════════════════ -->
+    <fieldset name="general">
+        <settings>
+            <label translate="true">General</label>
+            <collapsible>true</collapsible>
+            <opened>true</opened>
+        </settings>
+
+        <field name="template_id" formElement="input">
+            <settings>
+                <dataType>number</dataType>
+                <visible>false</visible>
+                <dataScope>template_id</dataScope>
+            </settings>
+        </field>
+
+        <field name="name" formElement="input">
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Template Name</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+                <dataScope>name</dataScope>
+            </settings>
+        </field>
+
+        <field name="is_active" formElement="checkbox">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="prefer" xsi:type="string">toggle</item>
+                    <item name="valueMap" xsi:type="array">
+                        <item name="true" xsi:type="number">1</item>
+                        <item name="false" xsi:type="number">0</item>
+                    </item>
+                    <item name="default" xsi:type="number">1</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>number</dataType>
+                <label translate="true">Active</label>
+                <dataScope>is_active</dataScope>
+            </settings>
+        </field>
+
+        <field name="description" formElement="textarea">
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Description (admin only)</label>
+                <dataScope>description</dataScope>
+            </settings>
+        </field>
+    </fieldset>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Options fieldset — dynamic rows
+         ═══════════════════════════════════════════════════════════════════ -->
+    <fieldset name="options_fieldset">
+        <settings>
+            <label translate="true">Options</label>
+            <collapsible>true</collapsible>
+            <opened>true</opened>
+        </settings>
+
+        <dynamicRows name="options">
+            <settings>
+                <addButtonLabel translate="true">Add Option</addButtonLabel>
+                <componentType>dynamicRows</componentType>
+                <dataScope>options</dataScope>
+                <deleteProperty>false</deleteProperty>
+                <dndConfig>
+                    <param name="enabled" xsi:type="boolean">true</param>
+                </dndConfig>
+            </settings>
+
+            <container name="record" component="Magento_Ui/js/dynamic-rows/record">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="isTemplate" xsi:type="boolean">true</item>
+                        <item name="is_collection" xsi:type="boolean">true</item>
+                        <item name="componentType" xsi:type="string">container</item>
+                        <item name="positionProvider" xsi:type="string">sort_order</item>
+                    </item>
+                </argument>
+
+                <field name="option_id" formElement="input">
+                    <settings>
+                        <dataType>number</dataType>
+                        <visible>false</visible>
+                        <dataScope>option_id</dataScope>
+                    </settings>
+                </field>
+
+                <field name="title" formElement="input">
+                    <settings>
+                        <dataType>text</dataType>
+                        <label translate="true">Title</label>
+                        <dataScope>title</dataScope>
+                        <validation>
+                            <rule name="required-entry" xsi:type="boolean">true</rule>
+                        </validation>
+                    </settings>
+                </field>
+
+                <field name="type" formElement="select">
+                    <settings>
+                        <dataType>text</dataType>
+                        <label translate="true">Type</label>
+                        <dataScope>type</dataScope>
+                    </settings>
+                    <formElements>
+                        <select>
+                            <settings>
+                                <options class="Etechflow\OptionsPlugin\Model\Source\OptionType"/>
+                            </settings>
+                        </select>
+                    </formElements>
+                </field>
+
+                <field name="is_required" formElement="checkbox">
+                    <argument name="data" xsi:type="array">
+                        <item name="config" xsi:type="array">
+                            <item name="prefer" xsi:type="string">toggle</item>
+                            <item name="valueMap" xsi:type="array">
+                                <item name="true" xsi:type="number">1</item>
+                                <item name="false" xsi:type="number">0</item>
+                            </item>
+                            <item name="default" xsi:type="number">0</item>
+                        </item>
+                    </argument>
+                    <settings>
+                        <dataType>number</dataType>
+                        <label translate="true">Required</label>
+                        <dataScope>is_required</dataScope>
+                    </settings>
+                </field>
+
+                <field name="price" formElement="input">
+                    <settings>
+                        <dataType>number</dataType>
+                        <label translate="true">Price</label>
+                        <notice translate="true">For text/file types only. Selectable options use per-value prices.</notice>
+                        <dataScope>price</dataScope>
+                    </settings>
+                </field>
+
+                <field name="sort_order" formElement="input">
+                    <settings>
+                        <dataType>number</dataType>
+                        <visible>false</visible>
+                        <dataScope>sort_order</dataScope>
+                    </settings>
+                </field>
+
+                <actionDelete>
+                    <settings>
+                        <dataType>text</dataType>
+                        <label/>
+                        <fit>true</fit>
+                    </settings>
+                </actionDelete>
+            </container>
+        </dynamicRows>
+    </fieldset>
+</form>

@@ -1,0 +1,169 @@
+<?xml version="1.0"?>
+<!--
+  Etechflow_OptionsPlugin 2.0.0 — Templates infrastructure
+  Five tables modeling reusable option templates that can be linked to many
+  products and categories. Plus a sync queue for async per-category fanout.
+
+  The `efopt_template_product` table's `magento_option_id` column is the bridge:
+  it stores the FK of the real `catalog_product_option` row that was created
+  on the target product when the template was synced. Mapping this lets us
+  later re-sync or de-sync cleanly without orphaning rows on the product.
+-->
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+
+    <table name="efopt_template" resource="default" engine="innodb" comment="eTechFlow Option Template">
+        <column xsi:type="int" name="template_id" padding="11" unsigned="false" nullable="false" identity="true" comment="Template ID"/>
+        <column xsi:type="varchar" name="name" length="255" nullable="false" default="" comment="Template Name"/>
+        <column xsi:type="smallint" name="is_active" padding="5" unsigned="true" nullable="false" default="1" comment="Active Flag"/>
+        <column xsi:type="text" name="description" nullable="true" comment="Admin Description"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="template_id"/>
+        </constraint>
+        <index referenceId="EFOPT_TEMPLATE_IS_ACTIVE" indexType="btree">
+            <column name="is_active"/>
+        </index>
+    </table>
+
+    <table name="efopt_template_option" resource="default" engine="innodb" comment="Options within a template">
+        <column xsi:type="int" name="option_id" padding="11" unsigned="false" nullable="false" identity="true" comment="Option ID"/>
+        <column xsi:type="int" name="template_id" padding="11" unsigned="false" nullable="false" comment="Parent Template"/>
+        <column xsi:type="int" name="sort_order" padding="11" unsigned="false" nullable="false" default="0" comment="Sort Order"/>
+        <column xsi:type="varchar" name="title" length="255" nullable="false" default="" comment="Option Title"/>
+        <column xsi:type="varchar" name="type" length="32" nullable="false" default="drop_down" comment="Magento option type (drop_down, radio, checkbox, multiple, field, area, file, date, time, date_time)"/>
+        <column xsi:type="smallint" name="is_required" padding="5" unsigned="true" nullable="false" default="0" comment="Is Required"/>
+        <column xsi:type="decimal" name="price" scale="4" precision="20" nullable="true" comment="Base price (text/file/area types)"/>
+        <column xsi:type="varchar" name="price_type" length="16" nullable="false" default="fixed" comment="fixed | percent"/>
+        <column xsi:type="varchar" name="sku" length="64" nullable="true" comment="SKU suffix"/>
+        <column xsi:type="int" name="max_characters" padding="11" unsigned="false" nullable="true" comment="Max chars for text"/>
+        <column xsi:type="int" name="image_size_x" padding="11" unsigned="false" nullable="true" comment="Image max width"/>
+        <column xsi:type="int" name="image_size_y" padding="11" unsigned="false" nullable="true" comment="Image max height"/>
+        <column xsi:type="varchar" name="file_extension" length="64" nullable="true" comment="Allowed file extensions"/>
+        <column xsi:type="int" name="default_value_id" padding="11" unsigned="false" nullable="true" comment="Which value (FK efopt_template_option_value.value_id) is default-selected on the storefront"/>
+        <column xsi:type="int" name="parent_value_id" padding="11" unsigned="false" nullable="true" comment="If set, this option is a sub-field shown only when the given value of its parent option is selected"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="option_id"/>
+        </constraint>
+        <constraint xsi:type="foreign"
+                    referenceId="EFOPT_TPL_OPTION_TEMPLATE_ID"
+                    table="efopt_template_option" column="template_id"
+                    referenceTable="efopt_template" referenceColumn="template_id"
+                    onDelete="CASCADE"/>
+        <index referenceId="EFOPT_TPL_OPTION_TEMPLATE_ID_SORT" indexType="btree">
+            <column name="template_id"/>
+            <column name="sort_order"/>
+        </index>
+    </table>
+
+    <table name="efopt_template_option_value" resource="default" engine="innodb" comment="Value choices for selectable options">
+        <column xsi:type="int" name="value_id" padding="11" unsigned="false" nullable="false" identity="true" comment="Value ID"/>
+        <column xsi:type="int" name="template_option_id" padding="11" unsigned="false" nullable="false" comment="Parent Option"/>
+        <column xsi:type="int" name="sort_order" padding="11" unsigned="false" nullable="false" default="0" comment="Sort Order"/>
+        <column xsi:type="varchar" name="title" length="255" nullable="false" default="" comment="Value Title"/>
+        <column xsi:type="decimal" name="price" scale="4" precision="20" nullable="false" default="0" comment="Value Price"/>
+        <column xsi:type="varchar" name="price_type" length="16" nullable="false" default="fixed" comment="fixed | percent"/>
+        <column xsi:type="varchar" name="sku" length="64" nullable="true" comment="SKU suffix"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="value_id"/>
+        </constraint>
+        <constraint xsi:type="foreign"
+                    referenceId="EFOPT_TPL_VAL_OPTION_ID"
+                    table="efopt_template_option_value" column="template_option_id"
+                    referenceTable="efopt_template_option" referenceColumn="option_id"
+                    onDelete="CASCADE"/>
+        <index referenceId="EFOPT_TPL_VAL_OPTION_ID_SORT" indexType="btree">
+            <column name="template_option_id"/>
+            <column name="sort_order"/>
+        </index>
+    </table>
+
+    <table name="efopt_template_category" resource="default" engine="innodb" comment="Template→Category links">
+        <column xsi:type="int" name="template_id" padding="11" unsigned="false" nullable="false" comment="Template"/>
+        <column xsi:type="int" name="category_id" padding="10" unsigned="true" nullable="false" comment="Category"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="template_id"/>
+            <column name="category_id"/>
+        </constraint>
+        <constraint xsi:type="foreign"
+                    referenceId="EFOPT_TPL_CAT_TEMPLATE_ID"
+                    table="efopt_template_category" column="template_id"
+                    referenceTable="efopt_template" referenceColumn="template_id"
+                    onDelete="CASCADE"/>
+        <constraint xsi:type="foreign"
+                    referenceId="EFOPT_TPL_CAT_CATEGORY_ID"
+                    table="efopt_template_category" column="category_id"
+                    referenceTable="catalog_category_entity" referenceColumn="entity_id"
+                    onDelete="CASCADE"/>
+        <index referenceId="EFOPT_TPL_CAT_CATEGORY_ID" indexType="btree">
+            <column name="category_id"/>
+        </index>
+    </table>
+
+    <table name="efopt_template_product" resource="default" engine="innodb" comment="Template→Product links + Magento option mapping">
+        <column xsi:type="int" name="link_id" padding="11" unsigned="false" nullable="false" identity="true" comment="Link ID"/>
+        <column xsi:type="int" name="template_id" padding="11" unsigned="false" nullable="false" comment="Template"/>
+        <column xsi:type="int" name="product_id" padding="10" unsigned="true" nullable="false" comment="Product"/>
+        <column xsi:type="int" name="template_option_id" padding="11" unsigned="false" nullable="false" comment="Source template option"/>
+        <column xsi:type="int" name="magento_option_id" padding="11" unsigned="false" nullable="true" comment="catalog_product_option.option_id created by sync"/>
+        <column xsi:type="varchar" name="source" length="16" nullable="false" default="direct" comment="direct | category"/>
+        <column xsi:type="int" name="source_category_id" padding="10" unsigned="true" nullable="true" comment="Resolving category if source=category"/>
+        <column xsi:type="timestamp" name="synced_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Last Synced"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="link_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="EFOPT_TPL_PRD_UQ">
+            <column name="template_id"/>
+            <column name="product_id"/>
+            <column name="template_option_id"/>
+        </constraint>
+        <constraint xsi:type="foreign"
+                    referenceId="EFOPT_TPL_PRD_TEMPLATE_ID"
+                    table="efopt_template_product" column="template_id"
+                    referenceTable="efopt_template" referenceColumn="template_id"
+                    onDelete="CASCADE"/>
+        <constraint xsi:type="foreign"
+                    referenceId="EFOPT_TPL_PRD_PRODUCT_ID"
+                    table="efopt_template_product" column="product_id"
+                    referenceTable="catalog_product_entity" referenceColumn="entity_id"
+                    onDelete="CASCADE"/>
+        <constraint xsi:type="foreign"
+                    referenceId="EFOPT_TPL_PRD_OPTION_ID"
+                    table="efopt_template_product" column="template_option_id"
+                    referenceTable="efopt_template_option" referenceColumn="option_id"
+                    onDelete="CASCADE"/>
+        <index referenceId="EFOPT_TPL_PRD_PRODUCT_ID" indexType="btree">
+            <column name="product_id"/>
+        </index>
+        <index referenceId="EFOPT_TPL_PRD_TEMPLATE_ID" indexType="btree">
+            <column name="template_id"/>
+        </index>
+    </table>
+
+    <table name="efopt_sync_queue" resource="default" engine="innodb" comment="Async sync queue for big categories">
+        <column xsi:type="int" name="queue_id" padding="11" unsigned="false" nullable="false" identity="true" comment="Queue ID"/>
+        <column xsi:type="int" name="template_id" padding="11" unsigned="false" nullable="false" comment="Template to sync"/>
+        <column xsi:type="int" name="product_id" padding="10" unsigned="true" nullable="false" comment="Target product"/>
+        <column xsi:type="varchar" name="action" length="16" nullable="false" default="sync" comment="sync | desync"/>
+        <column xsi:type="varchar" name="status" length="16" nullable="false" default="pending" comment="pending | running | done | failed"/>
+        <column xsi:type="text" name="error_message" nullable="true" comment="Error message if failed"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="queue_id"/>
+        </constraint>
+        <constraint xsi:type="foreign"
+                    referenceId="EFOPT_SYNC_QUEUE_TEMPLATE_ID"
+                    table="efopt_sync_queue" column="template_id"
+                    referenceTable="efopt_template" referenceColumn="template_id"
+                    onDelete="CASCADE"/>
+        <index referenceId="EFOPT_SYNC_QUEUE_STATUS" indexType="btree">
+            <column name="status"/>
+        </index>
+        <index referenceId="EFOPT_SYNC_QUEUE_PRODUCT_ID" indexType="btree">
+            <column name="product_id"/>
+        </index>
+    </table>
+
+</schema>

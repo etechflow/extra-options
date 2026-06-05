@@ -1,0 +1,791 @@
+<?php
+/** @var \Etechflow\OptionsPlugin\Block\Adminhtml\Template\Edit\Form $block */
+/** @var \Magento\Framework\Escaper $escaper */
+$template      = $block->getTemplate_();
+$templateId    = $block->getTemplateId();
+$isNew         = !$templateId;
+$opts          = $block->getOptionsTree();
+$linkedCatIds  = $block->getLinkedCategoryIds();
+$pageNum       = $block->getCurrentPage();
+$pageSize      = \Etechflow\OptionsPlugin\Block\Adminhtml\Template\Edit\Form::PRODUCTS_PER_PAGE;
+$linkedProducts = $block->getLinkedProducts($pageSize, ($pageNum - 1) * $pageSize);
+$totalLinked   = $block->getLinkedProductCount();
+$totalPages    = $block->getTotalPages();
+$categories    = $block->getCategoryOptions();
+?>
+<style>
+.efopt-card{background:#fff;border:1px solid #e3e3e3;border-radius:6px;padding:18px 20px;margin-bottom:18px}
+.efopt-card h3{margin:0 0 12px;font-weight:600;color:#41362f;font-size:16px}
+.efopt-card h3 .efopt-sub{font-weight:400;color:#777;font-size:13px;margin-left:8px}
+.efopt-field-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.efopt-field-row label{flex:0 0 180px;color:#41362f;font-size:13px}
+.efopt-field-row input[type=text],.efopt-field-row textarea,.efopt-field-row select{flex:1;padding:6px 10px;border:1px solid #ccc;border-radius:3px;background:#fff}
+.efopt-field-row textarea{min-height:60px}
+.efopt-options-table{width:100%;border-collapse:collapse}
+.efopt-options-table th,.efopt-options-table td{padding:6px 8px;border-bottom:1px solid #eee;vertical-align:top;text-align:left}
+.efopt-options-table th{background:#f5f5f5;font-weight:600;font-size:12px;text-transform:uppercase;color:#666}
+.efopt-options-table input[type=text],.efopt-options-table input[type=number],.efopt-options-table select{padding:4px 6px;border:1px solid #ccc;border-radius:3px;width:100%;box-sizing:border-box}
+.efopt-options-table .col-narrow{width:80px}
+.efopt-options-table .col-actions{width:70px;text-align:center}
+.efopt-options-table .col-title{min-width:200px}
+.efopt-values-table{margin-top:4px;width:100%;border-collapse:collapse;background:#fafafa}
+.efopt-values-table th,.efopt-values-table td{padding:3px 6px;border-bottom:1px dashed #ddd;font-size:12px}
+.efopt-add-btn{background:#0072c6;color:#fff;border:none;padding:6px 12px;border-radius:3px;cursor:pointer;font-size:12px}
+.efopt-add-btn:hover{background:#005a9e}
+.efopt-del-btn{background:#c00;color:#fff;border:none;padding:3px 7px;border-radius:3px;cursor:pointer;font-size:11px}
+.efopt-del-btn:hover{background:#a00}
+.efopt-products-table{width:100%;border-collapse:collapse;margin-top:8px}
+.efopt-products-table th,.efopt-products-table td{padding:5px 8px;border-bottom:1px solid #eee;font-size:12px}
+.efopt-products-table th{background:#f5f5f5;font-weight:600;text-transform:uppercase;color:#666}
+.efopt-tag{display:inline-block;padding:2px 8px;border-radius:10px;background:#e7f0fb;color:#1a5490;font-size:11px;font-weight:600}
+.efopt-tag.category{background:#fff3cd;color:#856404}
+</style>
+
+<form method="post" action="<?= $escaper->escapeUrl($block->getSaveUrl()) ?>" id="efopt-template-form">
+    <?= $block->getBlockHtml('formkey') ?>
+    <input type="hidden" name="data[template_id]" value="<?= (int)$templateId ?>">
+
+    <div class="page-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px">
+        <a href="<?= $escaper->escapeUrl($block->getBackUrl()) ?>" class="action-secondary"
+           style="padding:8px 16px;border:1px solid #ccc;border-radius:3px;text-decoration:none;color:#333">
+            ← <?= $escaper->escapeHtml(__('Back')) ?>
+        </a>
+        <?php if (!$isNew): ?>
+            <a href="#" class="action-secondary" style="padding:8px 16px;border:1px solid #ccc;border-radius:3px;text-decoration:none;color:#a00"
+               onclick="if(confirm('<?= $escaper->escapeJs(__('Delete this template? This will also remove the synced options from every linked product on the storefront.')) ?>'))location.href='<?= $escaper->escapeUrl($block->getDeleteUrl()) ?>';return false;">
+                <?= $escaper->escapeHtml(__('Delete')) ?>
+            </a>
+            <a href="<?= $escaper->escapeUrl($block->getResyncUrl()) ?>" class="action-secondary"
+               style="padding:8px 16px;border:1px solid #ccc;border-radius:3px;text-decoration:none;color:#333"
+               onclick="return confirm('<?= $escaper->escapeJs(__('Push template options to every linked product?')) ?>');">
+                <?= $escaper->escapeHtml(__('Re-sync All Linked Products')) ?>
+            </a>
+        <?php endif; ?>
+        <button type="submit" class="action-primary" style="padding:8px 20px;background:#0072c6;color:#fff;border:none;border-radius:3px;font-weight:600;cursor:pointer">
+            <?= $escaper->escapeHtml(__('Save Template')) ?>
+        </button>
+    </div>
+
+    <!-- ── General ────────────────────────────────────────────────────── -->
+    <div class="efopt-card">
+        <h3><?= $escaper->escapeHtml(__('General')) ?></h3>
+        <div class="efopt-field-row">
+            <label><?= $escaper->escapeHtml(__('Template Name')) ?> *</label>
+            <input type="text" name="data[name]" required
+                   value="<?= $escaper->escapeHtmlAttr((string)($template?->getData('name') ?? '')) ?>"/>
+        </div>
+        <div class="efopt-field-row">
+            <label><?= $escaper->escapeHtml(__('Active')) ?></label>
+            <select name="data[is_active]" style="flex:0 0 120px">
+                <option value="1" <?= ($template?->getData('is_active') ?? 1) ? 'selected' : '' ?>>Yes</option>
+                <option value="0" <?= !($template?->getData('is_active') ?? 1) ? 'selected' : '' ?>>No</option>
+            </select>
+        </div>
+        <div class="efopt-field-row">
+            <label><?= $escaper->escapeHtml(__('Description')) ?></label>
+            <textarea name="data[description]"><?= $escaper->escapeHtml((string)($template?->getData('description') ?? '')) ?></textarea>
+        </div>
+    </div>
+
+    <!-- ── Options ────────────────────────────────────────────────────── -->
+    <div class="efopt-card">
+        <h3>
+            <?= $escaper->escapeHtml(__('Options')) ?>
+            <span class="efopt-sub"><?= $escaper->escapeHtml(__('(%1 option(s))', count($opts))) ?></span>
+        </h3>
+
+        <table class="efopt-options-table" id="efopt-options-table">
+            <thead>
+                <tr>
+                    <th class="col-title"><?= $escaper->escapeHtml(__('Title')) ?> *</th>
+                    <th class="col-narrow"><?= $escaper->escapeHtml(__('Type')) ?></th>
+                    <th class="col-narrow"><?= $escaper->escapeHtml(__('Required')) ?></th>
+                    <th class="col-narrow"><?= $escaper->escapeHtml(__('Price')) ?></th>
+                    <th><?= $escaper->escapeHtml(__('Values (for selectable types)')) ?></th>
+                    <th class="col-actions"><?= $escaper->escapeHtml(__('Action')) ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $optIndex = 0; foreach ($opts as $o): ?>
+                    <tr class="efopt-option-row">
+                        <td>
+                            <input type="hidden" name="data[options][<?= $optIndex ?>][option_id]" value="<?= (int)$o['option_id'] ?>">
+                            <input type="text" name="data[options][<?= $optIndex ?>][title]" required
+                                   value="<?= $escaper->escapeHtmlAttr((string)$o['title']) ?>">
+                        </td>
+                        <td>
+                            <select name="data[options][<?= $optIndex ?>][type]">
+                                <?php foreach (['drop_down'=>'Drop-down','radio'=>'Radio','checkbox'=>'Checkbox','multiple'=>'Multi-select','field'=>'Text','area'=>'Text Area','file'=>'File Upload'] as $val=>$lbl): ?>
+                                    <option value="<?= $val ?>" <?= ($o['type'] ?? '')===$val?'selected':'' ?>><?= $escaper->escapeHtml($lbl) ?></option>
+                                <?php endforeach ?>
+                            </select>
+                        </td>
+                        <td><input type="checkbox" name="data[options][<?= $optIndex ?>][is_required]" value="1" <?= ($o['is_required']??0) ? 'checked' : '' ?>></td>
+                        <td><input type="number" step="0.01" name="data[options][<?= $optIndex ?>][price]"
+                                   value="<?= $o['price'] !== null ? $escaper->escapeHtmlAttr((string)$o['price']) : '' ?>"></td>
+                        <td>
+                            <?php if (in_array($o['type'] ?? '', ['drop_down','radio','checkbox','multiple'], true)): ?>
+                                <table class="efopt-values-table">
+                                    <thead><tr>
+                                        <th style="width:50px;text-align:center" title="<?= $escaper->escapeHtmlAttr(__('Mark one value as the default selection on the storefront')) ?>"><?= $escaper->escapeHtml(__('Default')) ?></th>
+                                        <th><?= $escaper->escapeHtml(__('Label')) ?></th>
+                                        <th style="width:90px"><?= $escaper->escapeHtml(__('Price')) ?></th>
+                                        <th style="width:60px"></th>
+                                    </tr></thead>
+                                    <tbody class="efopt-values-tbody">
+                                        <?php $vIdx=0; foreach ($o['values'] as $v): $isDefault = ((int)($o['default_value_id'] ?? 0) === (int)$v['value_id']); ?>
+                                            <tr>
+                                                <td style="text-align:center">
+                                                    <input type="radio"
+                                                           name="data[options][<?= $optIndex ?>][default_value_idx]"
+                                                           value="<?= $vIdx ?>"
+                                                           <?= $isDefault ? 'checked' : '' ?>
+                                                           title="<?= $escaper->escapeHtmlAttr(__('Default selection')) ?>">
+                                                </td>
+                                                <td>
+                                                    <input type="hidden" name="data[options][<?= $optIndex ?>][values][<?= $vIdx ?>][value_id]" value="<?= (int)$v['value_id'] ?>">
+                                                    <input type="text" name="data[options][<?= $optIndex ?>][values][<?= $vIdx ?>][title]" value="<?= $escaper->escapeHtmlAttr((string)$v['title']) ?>">
+                                                </td>
+                                                <td><input type="number" step="0.01" name="data[options][<?= $optIndex ?>][values][<?= $vIdx ?>][price]" value="<?= $escaper->escapeHtmlAttr((string)$v['price']) ?>"></td>
+                                                <td><button type="button" class="efopt-del-btn" onclick="this.closest('tr').remove()">×</button></td>
+                                            </tr>
+                                            <?php if (!empty($v['sub_options'])): ?>
+                                                <tr class="efopt-sub-row"><td></td><td colspan="3" style="padding-left:18px;background:#f6f9ff;border-left:3px solid #0535F5">
+                                                    <div style="font-size:11px;font-weight:600;color:#0535F5;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em">
+                                                        ↳ <?= $escaper->escapeHtml(__('Shown when this value is selected')) ?>
+                                                    </div>
+                                                    <?php foreach ($v['sub_options'] as $sub): ?>
+                                                        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:5px 8px;background:#fff;border:1px solid #dce7fb;border-radius:4px">
+                                                            <input type="hidden" name="data[sub_options][<?= (int)$sub['option_id'] ?>][option_id]" value="<?= (int)$sub['option_id'] ?>">
+                                                            <input type="hidden" name="data[sub_options][<?= (int)$sub['option_id'] ?>][parent_value_id]" value="<?= (int)$v['value_id'] ?>">
+                                                            <input type="text" style="flex:1" name="data[sub_options][<?= (int)$sub['option_id'] ?>][title]" value="<?= $escaper->escapeHtmlAttr((string)$sub['title']) ?>">
+                                                            <select name="data[sub_options][<?= (int)$sub['option_id'] ?>][type]" style="width:110px">
+                                                                <?php foreach (['field'=>'Text','area'=>'Text Area','file'=>'File Upload'] as $val=>$lbl): ?>
+                                                                    <option value="<?= $val ?>" <?= ($sub['type'] ?? '')===$val?'selected':'' ?>><?= $escaper->escapeHtml($lbl) ?></option>
+                                                                <?php endforeach ?>
+                                                            </select>
+                                                            <label style="font-size:11px;color:#666"><input type="checkbox" name="data[sub_options][<?= (int)$sub['option_id'] ?>][is_required]" value="1" <?= ($sub['is_required']??0) ? 'checked' : '' ?>> Required</label>
+                                                            <input type="number" step="0.01" style="width:80px" name="data[sub_options][<?= (int)$sub['option_id'] ?>][price]" placeholder="Price" value="<?= $sub['price'] !== null ? $escaper->escapeHtmlAttr((string)$sub['price']) : '' ?>">
+                                                            <button type="button" class="efopt-del-btn" onclick="this.closest('div').remove()">×</button>
+                                                        </div>
+                                                    <?php endforeach ?>
+                                                </td></tr>
+                                            <?php endif ?>
+                                        <?php $vIdx++; endforeach ?>
+                                    </tbody>
+                                    <tfoot><tr><td colspan="4" style="text-align:right;padding-top:4px">
+                                        <button type="button" class="efopt-add-btn" onclick="window.efoptAddValueRow(this, <?= $optIndex ?>)">+ <?= $escaper->escapeHtml(__('Add Value')) ?></button>
+                                    </td></tr></tfoot>
+                                </table>
+                            <?php else: ?>
+                                <span style="color:#999;font-size:12px"><?= $escaper->escapeHtml(__('— not applicable for this type —')) ?></span>
+                            <?php endif ?>
+                        </td>
+                        <td><button type="button" class="efopt-del-btn" onclick="this.closest('tr.efopt-option-row').remove()">× <?= $escaper->escapeHtml(__('Remove')) ?></button></td>
+                    </tr>
+                <?php $optIndex++; endforeach ?>
+            </tbody>
+            <tfoot>
+                <tr><td colspan="6" style="padding-top:10px">
+                    <button type="button" class="efopt-add-btn" onclick="window.efoptAddOptionRow()">+ <?= $escaper->escapeHtml(__('Add Option')) ?></button>
+                </td></tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- ── Apply To (warning-module-style 4-level cascading multi-select) ── -->
+    <?php
+    // Pre-classify currently-linked categories into level buckets so the JS picker
+    // can render their chips on load.
+    $catLevels = $block->getCategoryLevels($linkedCatIds);
+    $preL1 = []; $preL2 = []; $preL3 = [];
+    foreach ($linkedCatIds as $cid) {
+        $lvl = $catLevels[$cid] ?? 2;
+        if ($lvl === 2)       { $preL1[] = (int)$cid; }
+        elseif ($lvl === 3)   { $preL2[] = (int)$cid; }
+        else                  { $preL3[] = (int)$cid; }
+    }
+    $directProducts = array_values(array_filter($linkedProducts, static fn($p) => ($p['source'] ?? '') === 'direct'));
+    $preProducts = array_slice($directProducts, 0, 200);
+    ?>
+    <div class="efopt-card ks-picker">
+        <h3><?= $escaper->escapeHtml(__('Apply To')) ?></h3>
+
+        <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-left:4px solid #0535F5;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem;font-size:12.5px;line-height:1.55;color:#1F2937">
+            <p style="margin:0 0 .35rem 0;font-weight:700;color:#0535F5"><?= $escaper->escapeHtml(__('How to apply this template')) ?></p>
+            <ol style="margin:0;padding-left:1.25rem">
+                <li><strong><?= $escaper->escapeHtml(__('Step 1 — Category:')) ?></strong> <?= $escaper->escapeHtml(__('pick one or more top-level categories. Stop here and the template applies to every product in those whole branches.')) ?></li>
+                <li><strong><?= $escaper->escapeHtml(__('Step 2 — Subcategory (optional):')) ?></strong> <?= $escaper->escapeHtml(__('narrow to specific sub-branches. The parent is automatically dropped on save.')) ?></li>
+                <li><strong><?= $escaper->escapeHtml(__('Step 3 — Sub-subcategory (optional):')) ?></strong> <?= $escaper->escapeHtml(__('drill further. Deeper pick replaces broader selection.')) ?></li>
+                <li><strong><?= $escaper->escapeHtml(__('Step 4 — Specific products (optional):')) ?></strong> <?= $escaper->escapeHtml(__('hand-pick by name/SKU. Use on their own or combined with categories.')) ?></li>
+            </ol>
+            <p style="margin:.4rem 0 0 0;font-size:11.5px;color:#6B7280"><?= $escaper->escapeHtml(__('Tip: the deepest selection wins. Multiple selections per level are allowed.')) ?></p>
+        </div>
+
+        <!-- Level 1: top-level categories -->
+        <div style="margin-bottom:1rem">
+            <label style="display:block;font-weight:700;font-size:13px;margin-bottom:.35rem;color:#41362F">1. <?= $escaper->escapeHtml(__('Category')) ?></label>
+            <div style="position:relative">
+                <div class="ks-picker-trigger" data-key="cat1" id="ks-trig-cat1">
+                    <div class="ks-picker-chips" id="ks-chips-cat1"></div>
+                    <span class="ks-picker-placeholder" id="ks-ph-cat1"><?= $escaper->escapeHtml(__('Select one or more categories…')) ?></span>
+                </div>
+                <div class="ks-picker-pop" id="ks-pop-cat1" hidden>
+                    <input type="text" id="ks-search-cat1" placeholder="<?= $escaper->escapeHtmlAttr(__('Search categories…')) ?>">
+                    <div class="ks-picker-list" id="ks-list-cat1"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level 2: sub-categories -->
+        <div id="ks-block-cat2" hidden style="margin-bottom:1rem">
+            <label style="display:block;font-weight:700;font-size:13px;margin-bottom:.35rem;color:#41362F">2. <?= $escaper->escapeHtml(__('Subcategory')) ?> <span style="color:#9CA3AF;font-weight:400">(<?= $escaper->escapeHtml(__('optional')) ?>)</span></label>
+            <div style="position:relative">
+                <div class="ks-picker-trigger" data-key="cat2" id="ks-trig-cat2">
+                    <div class="ks-picker-chips" id="ks-chips-cat2"></div>
+                    <span class="ks-picker-placeholder" id="ks-ph-cat2"><?= $escaper->escapeHtml(__('All subcategories of selected — or narrow down…')) ?></span>
+                </div>
+                <div class="ks-picker-pop" id="ks-pop-cat2" hidden>
+                    <input type="text" id="ks-search-cat2" placeholder="<?= $escaper->escapeHtmlAttr(__('Search subcategories…')) ?>">
+                    <div class="ks-picker-list" id="ks-list-cat2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level 3: sub-sub-categories -->
+        <div id="ks-block-cat3" hidden style="margin-bottom:1rem">
+            <label style="display:block;font-weight:700;font-size:13px;margin-bottom:.35rem;color:#41362F">3. <?= $escaper->escapeHtml(__('Sub-subcategory')) ?> <span style="color:#9CA3AF;font-weight:400">(<?= $escaper->escapeHtml(__('optional')) ?>)</span></label>
+            <div style="position:relative">
+                <div class="ks-picker-trigger" data-key="cat3" id="ks-trig-cat3">
+                    <div class="ks-picker-chips" id="ks-chips-cat3"></div>
+                    <span class="ks-picker-placeholder" id="ks-ph-cat3"><?= $escaper->escapeHtml(__('Optional — drill down further…')) ?></span>
+                </div>
+                <div class="ks-picker-pop" id="ks-pop-cat3" hidden>
+                    <input type="text" id="ks-search-cat3" placeholder="<?= $escaper->escapeHtmlAttr(__('Search sub-subcategories…')) ?>">
+                    <div class="ks-picker-list" id="ks-list-cat3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level 4: specific products -->
+        <div style="margin-bottom:.5rem">
+            <label style="display:block;font-weight:700;font-size:13px;margin-bottom:.35rem;color:#41362F">4. <?= $escaper->escapeHtml(__('Specific Products')) ?> <span style="color:#9CA3AF;font-weight:400">(<?= $escaper->escapeHtml(__('optional — leave empty to cover ALL products in selected categories')) ?>)</span></label>
+            <div style="position:relative">
+                <div class="ks-picker-trigger" data-key="product" id="ks-trig-product">
+                    <div class="ks-picker-chips" id="ks-chips-product"></div>
+                    <span class="ks-picker-placeholder" id="ks-ph-product"><?= $escaper->escapeHtml(__('Type to search products by name or SKU…')) ?></span>
+                </div>
+                <div class="ks-picker-pop" id="ks-pop-product" hidden>
+                    <input type="text" id="ks-search-product" placeholder="<?= $escaper->escapeHtmlAttr(__('Search products by name or SKU…')) ?>">
+                    <div class="ks-picker-list" id="ks-list-product">
+                        <div style="padding:.5rem .75rem;font-size:12px;color:#9CA3AF;font-style:italic"><?= $escaper->escapeHtml(__('Type 2+ chars or pick categories above first.')) ?></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live preview of what will actually save -->
+        <div id="ks-save-preview" style="margin-top:14px;padding:.65rem .9rem;background:#F9FAFB;border:1px dashed #D1D5DB;border-radius:6px;font-size:12px;color:#374151;line-height:1.6">
+            <strong style="color:#0535F5"><?= $escaper->escapeHtml(__('On save:')) ?></strong>
+            <span id="ks-save-preview-text"><?= $escaper->escapeHtml(__('nothing selected yet.')) ?></span>
+        </div>
+
+        <!-- Hidden inputs — what gets posted on save -->
+        <input type="hidden" name="data[category_ids_csv]" id="ks-input-cats" value="">
+        <input type="hidden" name="data[product_ids_csv]"  id="ks-input-products" value="">
+        <input type="hidden" name="data[preserve_unrendered_products]" value="1">
+    </div>
+
+    <style>
+    /* Force-hide popups when [hidden] is set — admin theme can override the
+       browser's UA stylesheet, so use !important to be sure. */
+    .ks-picker-pop[hidden]{display:none !important}
+
+    .ks-picker-trigger{border:1.5px solid #D1D5DB;background:#fff;border-radius:6px;padding:.5rem 2.25rem .5rem .75rem;font-size:13px;cursor:pointer;min-height:42px;display:flex;flex-wrap:wrap;gap:.3rem;align-items:center;position:relative;transition:border-color .15s,box-shadow .15s}
+    .ks-picker-trigger:hover{border-color:#9CA3AF}
+    .ks-picker-trigger.ks-open{border-color:#0535F5;box-shadow:0 0 0 3px rgba(5,53,245,0.08)}
+    /* Chevron icon (pure CSS, no image) — rotates on open */
+    .ks-picker-trigger::after{content:'';position:absolute;right:.85rem;top:50%;width:8px;height:8px;border-right:2px solid #6B7280;border-bottom:2px solid #6B7280;transform:translateY(-75%) rotate(45deg);transition:transform .2s;pointer-events:none}
+    .ks-picker-trigger.ks-open::after{transform:translateY(-25%) rotate(-135deg);border-color:#0535F5}
+
+    .ks-picker-chips{display:flex;flex-wrap:wrap;gap:.3rem;flex:1;min-width:0}
+    .ks-picker-placeholder{color:#9CA3AF;font-size:12.5px}
+    .ks-picker-chips:not(:empty) ~ .ks-picker-placeholder{display:none}
+
+    .ks-chip{display:inline-flex;align-items:center;gap:.35rem;background:#EFF6FF;border:1px solid #BFDBFE;color:#0535F5;padding:.15rem .5rem;border-radius:999px;font-size:11.5px;font-weight:600;max-width:100%}
+    .ks-chip.is-product{background:#F0FDF4;border-color:#86EFAC;color:#15803D}
+    .ks-chip a{color:inherit;text-decoration:none;font-weight:900;cursor:pointer;padding:0 .15rem}
+    .ks-chip a:hover{color:#a00}
+
+    .ks-picker-pop{position:absolute;left:0;right:0;top:100%;margin-top:6px;background:#fff;border:1.5px solid #D1D5DB;border-radius:6px;max-height:230px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:200;display:flex;flex-direction:column}
+    .ks-picker-pop input[type=text]{width:100%;padding:.45rem .75rem;border:none;border-bottom:1px solid #E5E7EB;font-size:12.5px;outline:none;background:#FAFAFA}
+    .ks-picker-pop input[type=text]:focus{background:#fff}
+    .ks-picker-list{max-height:180px;overflow:auto}
+    .ks-picker-list label{display:flex;align-items:center;gap:.45rem;padding:.3rem .75rem;border-bottom:1px solid #F3F4F6;font-size:12px;cursor:pointer;margin:0;color:#374151}
+    .ks-picker-list label:hover{background:#F9FAFB}
+    .ks-picker-list label input[type=checkbox]{accent-color:#0535F5;width:13px;height:13px}
+    .ks-picker-list .ks-empty{padding:.5rem .75rem;font-size:11.5px;color:#9CA3AF;font-style:italic}
+    .ks-picker-list .ks-sku{color:#9CA3AF;font-size:11px;margin-left:.25rem;font-weight:400}
+    </style>
+
+    <!-- ── Linked Products (paginated) ────────────────────────────────── -->
+    <?php if (!$isNew && $totalLinked): ?>
+    <div class="efopt-card">
+        <h3>
+            <?= $escaper->escapeHtml(__('Currently Linked Products')) ?>
+            <span class="efopt-sub">
+                <?= $escaper->escapeHtml(__('(%1 total — page %2 of %3, %4 per page)',
+                    $totalLinked, $pageNum, $totalPages, $pageSize)) ?>
+            </span>
+        </h3>
+        <table class="efopt-products-table">
+            <thead><tr>
+                <th style="width:70px">ID</th><th>SKU</th><th>Name</th><th style="width:90px">Source</th><th style="width:160px">Synced At</th>
+            </tr></thead>
+            <tbody>
+                <?php foreach ($linkedProducts as $p): ?>
+                    <tr>
+                        <td><?= (int)$p['product_id'] ?></td>
+                        <td><?= $escaper->escapeHtml((string)($p['sku'] ?? '')) ?></td>
+                        <td><?= $escaper->escapeHtml((string)($p['name'] ?? '')) ?></td>
+                        <td><span class="efopt-tag <?= $p['source']==='category'?'category':'' ?>"><?= $escaper->escapeHtml((string)$p['source']) ?></span></td>
+                        <td><?= $escaper->escapeHtml((string)($p['synced_at'] ?? '')) ?></td>
+                    </tr>
+                <?php endforeach ?>
+            </tbody>
+        </table>
+
+        <?php if ($totalPages > 1): ?>
+        <div class="efopt-pagination">
+            <a class="efopt-page-btn <?= $pageNum <= 1 ? 'is-disabled' : '' ?>"
+               href="<?= $pageNum > 1 ? $escaper->escapeUrl($block->getPageUrl($pageNum - 1)) : '#' ?>"
+               <?= $pageNum <= 1 ? 'onclick="return false;"' : '' ?>>‹ <?= $escaper->escapeHtml(__('Previous')) ?></a>
+
+            <?php
+            // Show first, last, and a window around the current page.
+            $window = 2;
+            $pages = [];
+            for ($i = 1; $i <= $totalPages; $i++) {
+                if ($i === 1 || $i === $totalPages || abs($i - $pageNum) <= $window) {
+                    $pages[] = $i;
+                }
+            }
+            $pages = array_unique($pages);
+            sort($pages);
+            $prev = 0;
+            foreach ($pages as $p): if ($prev && $p > $prev + 1): ?>
+                <span class="efopt-page-ellipsis">…</span>
+            <?php endif; $prev = $p; ?>
+                <a class="efopt-page-btn <?= $p === $pageNum ? 'is-current' : '' ?>"
+                   href="<?= $escaper->escapeUrl($block->getPageUrl($p)) ?>"><?= $p ?></a>
+            <?php endforeach; ?>
+
+            <a class="efopt-page-btn <?= $pageNum >= $totalPages ? 'is-disabled' : '' ?>"
+               href="<?= $pageNum < $totalPages ? $escaper->escapeUrl($block->getPageUrl($pageNum + 1)) : '#' ?>"
+               <?= $pageNum >= $totalPages ? 'onclick="return false;"' : '' ?>><?= $escaper->escapeHtml(__('Next')) ?> ›</a>
+
+            <span class="efopt-page-jump">
+                <?= $escaper->escapeHtml(__('Jump to')) ?>:
+                <input type="number" min="1" max="<?= $totalPages ?>" value="<?= $pageNum ?>"
+                       id="efopt-page-jump-input"
+                       style="width:70px;padding:4px 6px;border:1px solid #ccc;border-radius:3px">
+                <button type="button" class="efopt-add-btn" id="efopt-page-jump-btn">Go</button>
+            </span>
+        </div>
+        <style>
+        .efopt-pagination{display:flex;align-items:center;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid #eee;flex-wrap:wrap}
+        .efopt-page-btn{display:inline-flex;align-items:center;padding:6px 12px;border:1px solid #D1D5DB;background:#fff;color:#374151;text-decoration:none;border-radius:4px;font-size:12px;font-weight:600;transition:all .15s}
+        .efopt-page-btn:hover:not(.is-disabled):not(.is-current){background:#F9FAFB;border-color:#0535F5;color:#0535F5}
+        .efopt-page-btn.is-current{background:#0535F5;border-color:#0535F5;color:#fff;cursor:default}
+        .efopt-page-btn.is-disabled{opacity:.4;cursor:not-allowed}
+        .efopt-page-ellipsis{color:#9CA3AF;padding:0 4px}
+        .efopt-page-jump{margin-left:auto;font-size:12px;color:#6B7280;display:flex;align-items:center;gap:6px}
+        </style>
+        <script>
+        (function(){
+            var btn = document.getElementById('efopt-page-jump-btn');
+            var inp = document.getElementById('efopt-page-jump-input');
+            if (!btn || !inp) return;
+            var base = '<?= /* @noEscape */ $block->getPageUrl(1) ?>'.replace(/\/linked_page\/\d+\/?$/, '/linked_page/');
+            function go() {
+                var p = Math.max(1, Math.min(<?= $totalPages ?>, parseInt(inp.value, 10) || 1));
+                location.href = base + p + '/';
+            }
+            btn.addEventListener('click', go);
+            inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+        })();
+        </script>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
+</form>
+
+<script>
+    // Vanilla JS row-cloning. Tracks the next index per option so add/remove
+    // doesn't collide with existing rows on submit.
+    (function () {
+        var nextOptIdx = <?= (int) count($opts) ?>;
+        window.efoptAddOptionRow = function () {
+            var tbody = document.querySelector('#efopt-options-table tbody');
+            var html = '<tr class="efopt-option-row">'
+                + '<td><input type="hidden" name="data[options][' + nextOptIdx + '][option_id]" value="">'
+                +     '<input type="text" name="data[options][' + nextOptIdx + '][title]" required></td>'
+                + '<td><select name="data[options][' + nextOptIdx + '][type]">'
+                +     '<option value="drop_down">Drop-down</option>'
+                +     '<option value="radio">Radio</option>'
+                +     '<option value="checkbox">Checkbox</option>'
+                +     '<option value="multiple">Multi-select</option>'
+                +     '<option value="field">Text</option>'
+                +     '<option value="area">Text Area</option>'
+                +     '<option value="file">File Upload</option>'
+                + '</select></td>'
+                + '<td><input type="checkbox" name="data[options][' + nextOptIdx + '][is_required]" value="1"></td>'
+                + '<td><input type="number" step="0.01" name="data[options][' + nextOptIdx + '][price]"></td>'
+                + '<td><span style="color:#999;font-size:12px">— save first to add values —</span></td>'
+                + '<td><button type="button" class="efopt-del-btn" onclick="this.closest(\'tr.efopt-option-row\').remove()">× Remove</button></td>'
+                + '</tr>';
+            tbody.insertAdjacentHTML('beforeend', html);
+            nextOptIdx++;
+        };
+
+        // Per-option value index tracker
+        var nextValIdx = {};
+        <?php foreach ($opts as $i => $o): ?>
+        nextValIdx[<?= $i ?>] = <?= count($o['values'] ?? []) ?>;
+        <?php endforeach ?>
+        window.efoptAddValueRow = function (btn, optIdx) {
+            var tbody = btn.closest('table.efopt-values-table').querySelector('tbody');
+            var vIdx = nextValIdx[optIdx] || 0;
+            var html = '<tr>'
+                + '<td style="text-align:center"><input type="radio" name="data[options][' + optIdx + '][default_value_idx]" value="' + vIdx + '"></td>'
+                + '<td><input type="hidden" name="data[options][' + optIdx + '][values][' + vIdx + '][value_id]" value="">'
+                +     '<input type="text" name="data[options][' + optIdx + '][values][' + vIdx + '][title]"></td>'
+                + '<td><input type="number" step="0.01" name="data[options][' + optIdx + '][values][' + vIdx + '][price]" value="0"></td>'
+                + '<td><button type="button" class="efopt-del-btn" onclick="this.closest(\'tr\').remove()">×</button></td>'
+                + '</tr>';
+            tbody.insertAdjacentHTML('beforeend', html);
+            nextValIdx[optIdx] = vIdx + 1;
+        };
+
+    })();
+
+    // ─── Apply-To picker — warning-module pattern: 4 multi-select dropdowns
+    //     Level 1 → top-level cats; L2 → children of L1 picks; L3 → children
+    //     of L2 picks; L4 → products from selected category set or search.
+    //     Multi-select per level. On save, Save.php narrows to deepest selection.
+    (function () {
+        var TREE = <?= /* @noEscape */ $block->getCategoryTreeJson() ?>;
+        var byId = {};
+        var byParent = {};
+        TREE.forEach(function (c) {
+            byId[c.id] = c;
+            (byParent[c.parent_id] = byParent[c.parent_id] || []).push(c);
+        });
+
+        var productEndpoint  = '<?= /* @noEscape */ $block->getUrl('efopt/templates/categoryProducts') ?>';
+        var searchEndpoint   = '<?= /* @noEscape */ $block->getUrl('efopt/templates/searchProducts') ?>';
+
+        // Pre-populated state from server-side render
+        var state = {
+            cat1: <?= json_encode(array_values(array_map('intval', $preL1))) ?>,
+            cat2: <?= json_encode(array_values(array_map('intval', $preL2))) ?>,
+            cat3: <?= json_encode(array_values(array_map('intval', $preL3))) ?>,
+            products: <?= json_encode(array_map(static fn($p) => [
+                'id'   => (int)$p['product_id'],
+                'name' => (string)($p['name'] ?? ''),
+                'sku'  => (string)($p['sku'] ?? ''),
+            ], $preProducts)) ?>,
+            productOptions: []   // current dropdown items for product picker
+        };
+
+        // ── Helpers ──────────────────────────────────────────────────────
+        function el(id) { return document.getElementById(id); }
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+            });
+        }
+        // Mirror Save.php's narrowToDeepest — drop any category whose
+        // descendant is also in the selection (by Magento `path` prefix).
+        function narrowToDeepest(catIds) {
+            if (catIds.length < 2) return catIds.slice();
+            // Build paths array from TREE
+            var paths = {};
+            TREE.forEach(function (c) {
+                // we need full path; TREE doesn't expose it, so derive it by walking parents
+                var chain = [c.id];
+                var cur = c;
+                while (cur && cur.parent_id && byId[cur.parent_id]) {
+                    chain.unshift(cur.parent_id);
+                    cur = byId[cur.parent_id];
+                }
+                paths[c.id] = chain.join('/');
+            });
+            return catIds.filter(function (id) {
+                var myPath = paths[id];
+                if (!myPath) return true;
+                return !catIds.some(function (other) {
+                    if (other === id) return false;
+                    return (paths[other] || '').indexOf(myPath + '/') === 0;
+                });
+            });
+        }
+
+        function syncHidden() {
+            var allCats = state.cat1.concat(state.cat2, state.cat3);
+            el('ks-input-cats').value = allCats.join(',');
+            el('ks-input-products').value = state.products.map(function (p) { return p.id; }).join(',');
+            updatePreview(allCats);
+        }
+
+        function updatePreview(allCats) {
+            var deepest = narrowToDeepest(allCats);
+            var parts = [];
+            if (deepest.length) {
+                var names = deepest.map(function (id) { return byId[id] ? byId[id].name : '#' + id; });
+                parts.push('apply to <strong>all products in</strong> '
+                    + names.map(function (n) { return '<em>' + n + '</em>'; }).join(', ')
+                    + ' <span style="color:#9CA3AF">(plus their sub-categories)</span>');
+            }
+            if (state.products.length) {
+                parts.push('apply directly to <strong>' + state.products.length + ' specific product'
+                    + (state.products.length === 1 ? '' : 's') + '</strong>');
+            }
+            var dropped = allCats.filter(function (id) { return deepest.indexOf(id) < 0; });
+            if (dropped.length) {
+                var droppedNames = dropped.map(function (id) { return byId[id] ? byId[id].name : '#' + id; });
+                parts.push('<span style="color:#92400E">(parent categories ' + droppedNames.join(', ') + ' will be dropped since you also picked their descendants)</span>');
+            }
+            el('ks-save-preview-text').innerHTML = parts.length
+                ? parts.join('; ') + '.'
+                : 'nothing selected — save will leave the template unlinked.';
+        }
+        function pruneChildren() {
+            // Drop L2 entries whose parent isn't in L1 anymore
+            state.cat2 = state.cat2.filter(function (id) {
+                var c = byId[id];
+                return c && state.cat1.indexOf(c.parent_id) >= 0;
+            });
+            // Drop L3 entries whose parent isn't in L2 anymore
+            state.cat3 = state.cat3.filter(function (id) {
+                var c = byId[id];
+                return c && state.cat2.indexOf(c.parent_id) >= 0;
+            });
+        }
+
+        // ── Render chips into each trigger box ──────────────────────────
+        function renderChips() {
+            // Categories: chips
+            ['cat1','cat2','cat3'].forEach(function (key) {
+                var box = el('ks-chips-' + key);
+                box.innerHTML = '';
+                state[key].forEach(function (id) {
+                    var c = byId[id];
+                    var chip = document.createElement('span');
+                    chip.className = 'ks-chip';
+                    chip.innerHTML = esc(c ? c.name : '#' + id)
+                        + ' <a data-key="' + key + '" data-id="' + id + '" class="ks-chip-x-cat">×</a>';
+                    box.appendChild(chip);
+                });
+            });
+            // Products: chips
+            var pbox = el('ks-chips-product');
+            pbox.innerHTML = '';
+            state.products.forEach(function (p) {
+                var chip = document.createElement('span');
+                chip.className = 'ks-chip is-product';
+                chip.innerHTML = esc(p.name || ('#' + p.id))
+                    + ' <span class="ks-sku">(' + esc(p.sku) + ')</span>'
+                    + ' <a data-pid="' + p.id + '" class="ks-chip-x-prod">×</a>';
+                pbox.appendChild(chip);
+            });
+            // Show/hide sub-levels — keep a level visible if its parent has
+            // selections OR if this level itself already has selections
+            // (e.g. reopening a template that was saved with a L3 category
+            // but no L2 parent — the chip must still render).
+            el('ks-block-cat2').hidden = state.cat1.length === 0 && state.cat2.length === 0;
+            el('ks-block-cat3').hidden = state.cat2.length === 0 && state.cat3.length === 0;
+            syncHidden();
+        }
+
+        // ── Build option lists for each picker pop ──────────────────────
+        function getCat1Options(q) {
+            q = (q || '').toLowerCase();
+            return TREE.filter(function (c) {
+                return c.level === 2 && (!q || c.name.toLowerCase().indexOf(q) >= 0);
+            });
+        }
+        function getCat2Options(q) {
+            q = (q || '').toLowerCase();
+            return TREE.filter(function (c) {
+                return c.level === 3
+                    && state.cat1.indexOf(c.parent_id) >= 0
+                    && (!q || c.name.toLowerCase().indexOf(q) >= 0);
+            });
+        }
+        function getCat3Options(q) {
+            q = (q || '').toLowerCase();
+            return TREE.filter(function (c) {
+                return c.level >= 4
+                    && state.cat2.indexOf(c.parent_id) >= 0
+                    && (!q || c.name.toLowerCase().indexOf(q) >= 0);
+            });
+        }
+
+        function renderCatList(key) {
+            var list = el('ks-list-' + key);
+            var q = el('ks-search-' + key).value;
+            var getter = ({cat1: getCat1Options, cat2: getCat2Options, cat3: getCat3Options})[key];
+            var items = getter(q);
+            list.innerHTML = '';
+            if (!items.length) {
+                list.innerHTML = '<div class="ks-empty">— ' + (q ? 'No matches' : 'No options') + ' —</div>';
+                return;
+            }
+            items.forEach(function (c) {
+                var label = document.createElement('label');
+                var checked = state[key].indexOf(c.id) >= 0 ? 'checked' : '';
+                label.innerHTML = '<input type="checkbox" data-id="' + c.id + '" data-key="' + key + '" ' + checked + '> '
+                    + esc(c.name);
+                list.appendChild(label);
+            });
+        }
+
+        // ── Product list (AJAX) ─────────────────────────────────────────
+        var productLoadTimer = null;
+        function loadProducts() {
+            var q = el('ks-search-product').value.trim();
+            var cats = state.cat1.concat(state.cat2, state.cat3).filter(function (id, i, a) {
+                return a.indexOf(id) === i;
+            });
+            // Decide endpoint: free-text search OR category-scoped list
+            var url, params;
+            if (q.length >= 2) {
+                // Free search by name/SKU
+                url = searchEndpoint + '?q=' + encodeURIComponent(q);
+                if (cats.length) { url += '&category=' + encodeURIComponent(cats.join(',')); }
+            } else if (cats.length) {
+                // Category-scoped list (first picked cat — backend handles descendants)
+                url = productEndpoint + '?category_id=' + encodeURIComponent(cats[0]);
+            } else {
+                el('ks-list-product').innerHTML = '<div class="ks-empty">Type 2+ chars or pick categories above first.</div>';
+                state.productOptions = [];
+                return;
+            }
+            el('ks-list-product').innerHTML = '<div class="ks-empty">Loading…</div>';
+            fetch(url, { credentials: 'same-origin', headers: {'X-Requested-With':'XMLHttpRequest'} })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    state.productOptions = data.items || [];
+                    renderProductList();
+                })
+                .catch(function () { el('ks-list-product').innerHTML = '<div class="ks-empty">Error loading.</div>'; });
+        }
+        function renderProductList() {
+            var list = el('ks-list-product');
+            list.innerHTML = '';
+            if (!state.productOptions.length) {
+                list.innerHTML = '<div class="ks-empty">No products found.</div>';
+                return;
+            }
+            var pickedIds = state.products.map(function (p) { return p.id; });
+            state.productOptions.forEach(function (p) {
+                var label = document.createElement('label');
+                var checked = pickedIds.indexOf(p.id) >= 0 ? 'checked' : '';
+                label.innerHTML = '<input type="checkbox" data-pid="' + p.id + '" '
+                    + 'data-name="' + esc(p.name).replace(/"/g, '&quot;') + '" '
+                    + 'data-sku="' + esc(p.sku) + '" ' + checked + '> '
+                    + esc(p.name) + ' <span class="ks-sku">(' + esc(p.sku) + ')</span>';
+                list.appendChild(label);
+            });
+        }
+
+        // ── Wire up pickers ──────────────────────────────────────────────
+        function openPop(key) {
+            ['cat1','cat2','cat3','product'].forEach(function (k) {
+                var pop = el('ks-pop-' + k);
+                var trig = el('ks-trig-' + k);
+                if (k === key) { pop.hidden = false; trig.classList.add('ks-open'); }
+                else            { pop.hidden = true;  trig.classList.remove('ks-open'); }
+            });
+            if (key && key.indexOf('cat') === 0) { renderCatList(key); }
+            else if (key === 'product')          { loadProducts(); }
+        }
+        function closeAll() { openPop(null); }
+
+        ['cat1','cat2','cat3','product'].forEach(function (key) {
+            el('ks-trig-' + key).addEventListener('click', function (e) {
+                // Ignore clicks on chip ×
+                if (e.target.tagName === 'A') return;
+                e.stopPropagation();
+                var pop = el('ks-pop-' + key);
+                if (pop.hidden) { openPop(key); } else { closeAll(); }
+            });
+        });
+        ['cat1','cat2','cat3'].forEach(function (key) {
+            el('ks-search-' + key).addEventListener('input', function () { renderCatList(key); });
+            el('ks-list-' + key).addEventListener('change', function (e) {
+                if (e.target.tagName !== 'INPUT') return;
+                var id = parseInt(e.target.dataset.id, 10);
+                if (!id) return;
+                if (e.target.checked) {
+                    if (state[key].indexOf(id) < 0) state[key].push(id);
+                } else {
+                    state[key] = state[key].filter(function (i) { return i !== id; });
+                }
+                pruneChildren();
+                renderChips();
+                if (key === 'cat1') renderCatList('cat2');
+                if (key === 'cat2') renderCatList('cat3');
+            });
+        });
+        // Product search input
+        el('ks-search-product').addEventListener('input', function () {
+            clearTimeout(productLoadTimer);
+            productLoadTimer = setTimeout(loadProducts, 250);
+        });
+        el('ks-list-product').addEventListener('change', function (e) {
+            if (e.target.tagName !== 'INPUT') return;
+            var pid = parseInt(e.target.dataset.pid, 10);
+            if (!pid) return;
+            if (e.target.checked) {
+                if (!state.products.some(function (p) { return p.id === pid; })) {
+                    state.products.push({
+                        id: pid,
+                        name: e.target.dataset.name || '',
+                        sku:  e.target.dataset.sku  || ''
+                    });
+                }
+            } else {
+                state.products = state.products.filter(function (p) { return p.id !== pid; });
+            }
+            renderChips();
+        });
+
+        // Chip × handlers (event delegation on document)
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('ks-chip-x-cat')) {
+                e.stopPropagation();
+                var key = e.target.dataset.key;
+                var id  = parseInt(e.target.dataset.id, 10);
+                state[key] = state[key].filter(function (i) { return i !== id; });
+                pruneChildren();
+                renderChips();
+                return;
+            }
+            if (e.target.classList.contains('ks-chip-x-prod')) {
+                e.stopPropagation();
+                var pid = parseInt(e.target.dataset.pid, 10);
+                state.products = state.products.filter(function (p) { return p.id !== pid; });
+                renderChips();
+                return;
+            }
+            // Outside click closes pops
+            if (!e.target.closest('.ks-picker')) { closeAll(); }
+        });
+
+        // Initial paint
+        renderChips();
+    })();
+</script>

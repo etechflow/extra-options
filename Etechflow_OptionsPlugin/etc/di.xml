@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Existing: suppress hard-required errors for file options when the
+         admin flag is enabled. Kept verbatim. -->
+    <type name="Magento\Catalog\Model\Product\Option\Type\File">
+        <plugin name="etechflow_options_soft_required_file"
+                type="Etechflow\OptionsPlugin\Plugin\SoftRequiredFile"
+                sortOrder="10"/>
+        <!-- Multi-file display on File type: subclass overrides
+             getFormattedOptionValue/getCustomizedView/getEditableOptionValue,
+             so the DefaultType plugin alone wouldn't catch them. -->
+        <plugin name="etechflow_options_multi_file_display_on_file"
+                type="Etechflow\OptionsPlugin\Plugin\MultiFileDisplay"
+                sortOrder="20"/>
+    </type>
+
+    <!-- Conditional validation + non-matching-satellite stripping for the
+         cuttable-product "Cut from code / image / no thanks" flow. -->
+    <type name="Magento\Catalog\Model\Product\Type\AbstractType">
+        <plugin name="etechflow_options_conditional_required"
+                type="Etechflow\OptionsPlugin\Plugin\ConditionalRequired"
+                sortOrder="20"/>
+        <!-- Multi-file image upload: replace the native single-file slot with
+             a JSON list of paths from /etechflow/files/upload. Runs BEFORE
+             ConditionalRequired so that conditional validation sees the
+             already-decoded option value. -->
+        <plugin name="etechflow_options_multi_file_buy_request"
+                type="Etechflow\OptionsPlugin\Plugin\MultiFileBuyRequest"
+                sortOrder="5"/>
+    </type>
+
+    <!-- Multi-file display on the generic option-type base class — covers any
+         non-file option that might carry the marker (defensive net). -->
+    <type name="Magento\Catalog\Model\Product\Option\Type\DefaultType">
+        <plugin name="etechflow_options_multi_file_display_default"
+                type="Etechflow\OptionsPlugin\Plugin\MultiFileDisplay"
+                sortOrder="10"/>
+    </type>
+
+    <!-- Hyvä cart drawer renders file options via its own data provider that
+         unserializes the value directly — would blow up on the marker.
+         This plugin short-circuits getData when the marker is present.
+         Safe even without Hyvä installed: Magento just never invokes it. -->
+    <type name="Hyva\Theme\Model\CartItem\DataProvider\CustomizableOptionValue\File">
+        <plugin name="etechflow_options_hyva_multi_file_cart_data"
+                type="Etechflow\OptionsPlugin\Plugin\HyvaMultiFileCartData"
+                sortOrder="10"/>
+    </type>
+</config>
