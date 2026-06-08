@@ -122,9 +122,22 @@ class MigrationService
         }
 
         // 3. Create one template per signature.
-        $linkTable = $this->resourceConnection->getTableName('efopt_template_product');
+        $linkTable     = $this->resourceConnection->getTableName('efopt_template_product');
+        $templateTable = $this->resourceConnection->getTableName('efopt_template');
 
         foreach ($signatures as $sig => $grp) {
+            // Idempotency: a previous run records "Signature: <sig>" in the template
+            // description. If a template for this signature already exists, skip the
+            // group so re-running the migration never duplicates templates/options.
+            $existingTplId = (int) $conn->fetchOne(
+                $conn->select()->from($templateTable, 'template_id')
+                    ->where('description LIKE ?', '%Signature: ' . $sig . '%')
+                    ->limit(1)
+            );
+            if ($existingTplId > 0) {
+                continue;
+            }
+
             $tplName = 'Migrated: ' . count($grp['options']) . ' option(s) — '
                 . substr($grp['options'][0]['title'] ?? 'set', 0, 40);
             $tpl = $this->templateFactory->create();

@@ -11,7 +11,6 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Filesystem;
 use Magento\Framework\Filesystem\Driver\File as FileDriver;
-use Magento\Framework\HTTP\PhpEnvironment\Request as HttpRequest;
 use Magento\Framework\UrlInterface;
 use Psr\Log\LoggerInterface;
 
@@ -127,26 +126,33 @@ class Upload implements HttpPostActionInterface, CsrfAwareActionInterface
                 'url'  => $url,
             ]);
         } catch (\Throwable $e) {
-            $this->logger->error('[etmm upload] ' . $e->getMessage(), ['exception' => $e]);
+            $this->logger->error('[efopt upload] ' . $e->getMessage(), ['exception' => $e]);
             return $result->setHttpResponseCode(500)
                 ->setData(['ok' => false, 'error' => 'Server error.']);
         }
     }
 
-    /** Magento 2 CSRF: form_key on the POST body. */
+    /**
+     * Returning null defers to Magento's default CSRF handling: when the standard
+     * form-key validation below fails, Magento raises its own 403 response.
+     */
     public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
     {
-        return null; // Form-key check handled by the form_key field in the POST.
+        return null;
     }
 
+    /**
+     * Returning null applies Magento's STANDARD form-key (CSRF) validation — the
+     * request is accepted only when it carries a valid session form_key. The
+     * storefront uploader must append `form_key` to the upload FormData.
+     *
+     * NOTE: a previous version returned true for every POST, which disabled CSRF
+     * entirely and turned this into an unauthenticated file-write endpoint. Never
+     * short-circuit CSRF here.
+     */
     public function validateForCsrf(RequestInterface $request): ?bool
     {
-        if ($request instanceof HttpRequest && $request->isPost()) {
-            // The frontend includes form_key — Magento's CSRF Validator already
-            // covers it via the standard form_key flow when present.
-            return true;
-        }
-        return false;
+        return null;
     }
 
     /** Sniff MIME from the file contents (not the browser-supplied header). */

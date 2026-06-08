@@ -12,6 +12,8 @@ use Magento\Catalog\Model\Product\OptionFactory as ProductOptionFactory;
 use Magento\Catalog\Model\Product\Option\Value as ProductOptionValue;
 use Magento\Catalog\Model\Product\Option\ValueFactory as ProductOptionValueFactory;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DataObject;
+use Magento\Framework\Event\ManagerInterface as EventManager;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Psr\Log\LoggerInterface;
 
@@ -41,7 +43,8 @@ class SyncService
         private readonly ProductOptionValueFactory $productOptionValueFactory,
         private readonly TemplateOptionCollectionFactory $templateOptionCollectionFactory,
         private readonly TemplateValueCollectionFactory $templateValueCollectionFactory,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
+        private readonly EventManager $eventManager
     ) {}
 
     /**
@@ -205,17 +208,33 @@ class SyncService
             $conn->delete($linkTable, ['link_id = ?' => (int)$row['link_id']]);
         }
 
-        // CRITICAL: flip has_options / required_options on the product so
-        // Magento's cart processor knows to look up the new options. Without
-        // these flags, the option silently won't be added to the cart line
-        // item (PDP renders fine, but add-to-cart drops the selection because
-        // Magento short-circuits when has_options=0).
+        // Flip has_options / required_options and bust the product cache so the
+        // synced options actually surface on the storefront.
+        $this->refreshProductFlags($productId);
+    }
+
+    /**
+     * Recompute has_options / required_options from the product's current
+     * catalog_product_option rows, then invalidate the product's cache so the
+     * storefront PDP (full-page + block cache) reflects the change.
+     *
+     * The flags are CRITICAL: Magento's cart processor short-circuits when
+     * has_options=0, silently dropping option selections at add-to-cart even
+     * though the PDP renders them. The cache bust matters because category /
+     * bulk-price / cron syncs mutate options via raw SQL, OUTSIDE the product
+     * save flow that would normally clear the cache.
+     */
+    private function refreshProductFlags(int $productId): void
+    {
+        $conn = $this->resourceConnection->getConnection();
+        $optionTable = $conn->getTableName('catalog_product_option');
+
         $hasOptions = (int) $conn->fetchOne(
-            $conn->select()->from($conn->getTableName('catalog_product_option'), new \Zend_Db_Expr('COUNT(*)'))
+            $conn->select()->from($optionTable, new \Zend_Db_Expr('COUNT(*)'))
                 ->where('product_id = ?', $productId)
         ) > 0 ? 1 : 0;
         $requiredOptions = (int) $conn->fetchOne(
-            $conn->select()->from($conn->getTableName('catalog_product_option'), new \Zend_Db_Expr('COALESCE(MAX(is_require), 0)'))
+            $conn->select()->from($optionTable, new \Zend_Db_Expr('COALESCE(MAX(is_require), 0)'))
                 ->where('product_id = ?', $productId)
         );
         $conn->update(
@@ -223,6 +242,17 @@ class SyncService
             ['has_options' => $hasOptions, 'required_options' => $requiredOptions],
             ['entity_id = ?' => $productId]
         );
+
+        // Best-effort cache bust (block_html + full-page cache) so the synced
+        // options surface without a manual flush — mirrors what a product save does
+        // via clean_cache_by_tags. Never break the sync over a cache error.
+        try {
+            $this->eventManager->dispatch('clean_cache_by_tags', [
+                'object' => new DataObject(['identities' => [Product::CACHE_TAG . '_' . $productId]]),
+            ]);
+        } catch (\Throwable $e) {
+            $this->logger->warning('[efopt sync] cache clean failed for product ' . $productId . ': ' . $e->getMessage());
+        }
     }
 
     /**
@@ -375,6 +405,7 @@ class SyncService
                     'template_id' => $templateId,
                     'product_id'  => (int)$pid,
                     'action'      => SyncQueueItem::ACTION_SYNC,
+                    'source'      => 'category',
                     'status'      => SyncQueueItem::STATUS_PENDING,
                 ]);
             }
@@ -407,6 +438,10 @@ class SyncService
             'template_id = ?' => $templateId,
             'product_id = ?'  => $productId,
         ]);
+
+        // Recompute has_options + bust cache so the product stops advertising
+        // options it no longer has (previously left stale on de-sync).
+        $this->refreshProductFlags($productId);
     }
 
     /**
@@ -439,9 +474,27 @@ class SyncService
             );
         }
         $all = array_unique(array_map('intval', array_merge($directIds, $catProductIds)));
-        foreach ($all as $pid) {
-            $source = in_array($pid, array_map('intval', $directIds), true) ? 'direct' : 'category';
-            $this->syncTemplateToProduct($templateId, $pid, $source);
+        $directSet = array_flip(array_map('intval', $directIds));
+
+        // Large re-syncs are enqueued for the cron so an admin action never times
+        // out; small ones run inline. The queue carries the per-product source so
+        // direct links don't get mis-tagged as category when the cron processes them.
+        if (count($all) > 50) {
+            $queueTable = $this->resourceConnection->getTableName('efopt_sync_queue');
+            foreach ($all as $pid) {
+                $conn->insert($queueTable, [
+                    'template_id' => $templateId,
+                    'product_id'  => (int)$pid,
+                    'action'      => SyncQueueItem::ACTION_SYNC,
+                    'source'      => isset($directSet[$pid]) ? 'direct' : 'category',
+                    'status'      => SyncQueueItem::STATUS_PENDING,
+                ]);
+            }
+        } else {
+            foreach ($all as $pid) {
+                $source = isset($directSet[$pid]) ? 'direct' : 'category';
+                $this->syncTemplateToProduct($templateId, $pid, $source);
+            }
         }
         return count($all);
     }

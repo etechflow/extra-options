@@ -146,6 +146,7 @@
         <column xsi:type="int" name="template_id" padding="11" unsigned="false" nullable="false" comment="Template to sync"/>
         <column xsi:type="int" name="product_id" padding="10" unsigned="true" nullable="false" comment="Target product"/>
         <column xsi:type="varchar" name="action" length="16" nullable="false" default="sync" comment="sync | desync"/>
+        <column xsi:type="varchar" name="source" length="16" nullable="false" default="category" comment="direct | category — preserved onto the synced link row"/>
         <column xsi:type="varchar" name="status" length="16" nullable="false" default="pending" comment="pending | running | done | failed"/>
         <column xsi:type="text" name="error_message" nullable="true" comment="Error message if failed"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>

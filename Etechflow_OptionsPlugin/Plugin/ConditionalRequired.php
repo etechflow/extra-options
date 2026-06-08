@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Etechflow\OptionsPlugin\Plugin;
 
+use Etechflow\OptionsPlugin\Model\Config;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Type\AbstractType;
 use Magento\Framework\DataObject;
@@ -23,8 +24,10 @@ use Magento\Framework\Exception\LocalizedException;
  */
 class ConditionalRequired
 {
-    private const CHOICE_KEYWORDS_CODE  = ['from the code', 'cut from code'];
-    private const CHOICE_KEYWORDS_IMAGE = ['from the image', 'cut from image'];
+    public function __construct(
+        private readonly Config $config
+    ) {
+    }
 
     public function beforePrepareForCartAdvanced(
         AbstractType $subject,
@@ -44,6 +47,16 @@ class ConditionalRequired
             return [$buyRequest, $product, $processMode];
         }
 
+        // Keyword lists come from admin config (Stores → Configuration → eTechFlow →
+        // Extra Options Plugin → Frontend Radio-Card), with sane English fallbacks.
+        // Sourcing them here keeps this validation in step with the storefront
+        // grouping and lets non-English stores localise the matching.
+        $primaryKw     = $this->config->getPrimaryKeywords()    ?: ['would you like', 'cut this', 'cut it'];
+        $codeInputKw   = $this->config->getCodeInputKeywords()  ?: ['key code', 'enter code'];
+        $imageInputKw  = $this->config->getImageInputKeywords() ?: ['upload image', 'image of'];
+        $codeChoiceKw  = $this->config->getCodeKeywords()       ?: ['from the code', 'cut from code'];
+        $imageChoiceKw = $this->config->getImageKeywords()      ?: ['from the image', 'cut from image'];
+
         // Find the cutting dropdown + the satellite code field + the satellite image file.
         $primary = null;
         $codeField = null;
@@ -51,21 +64,14 @@ class ConditionalRequired
         foreach ($options as $opt) {
             $title = strtolower((string)$opt->getTitle());
             $type  = (string)$opt->getType();
-            if (!$primary
-                && $type === 'drop_down'
-                && strpos($title, 'would you like') !== false
-                && strpos($title, 'cut') !== false
-            ) {
+            if (!$primary && $type === 'drop_down' && $this->matchesAny($title, $primaryKw)) {
                 $primary = $opt;
             } elseif (!$codeField
                 && in_array($type, ['field', 'area'], true)
-                && (strpos($title, 'key code') !== false || strpos($title, 'enter code') !== false)
+                && $this->matchesAny($title, $codeInputKw)
             ) {
                 $codeField = $opt;
-            } elseif (!$imageFile
-                && $type === 'file'
-                && (strpos($title, 'upload image') !== false || strpos($title, 'image of') !== false)
-            ) {
+            } elseif (!$imageFile && $type === 'file' && $this->matchesAny($title, $imageInputKw)) {
                 $imageFile = $opt;
             }
         }
@@ -91,8 +97,8 @@ class ConditionalRequired
             return [$buyRequest, $product, $processMode];
         }
 
-        $isCodeChoice  = $this->matchesAny($chosenTitle, self::CHOICE_KEYWORDS_CODE);
-        $isImageChoice = $this->matchesAny($chosenTitle, self::CHOICE_KEYWORDS_IMAGE);
+        $isCodeChoice  = $this->matchesAny($chosenTitle, $codeChoiceKw);
+        $isImageChoice = $this->matchesAny($chosenTitle, $imageChoiceKw);
 
         // ---- Validate the matching satellite ----
         if ($isCodeChoice && $codeField) {

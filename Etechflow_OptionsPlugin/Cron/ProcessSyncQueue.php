@@ -28,28 +28,44 @@ class ProcessSyncQueue
         $conn = $this->resourceConnection->getConnection();
         $table = $this->resourceConnection->getTableName('efopt_sync_queue');
 
-        $items = $conn->fetchAll(
-            $conn->select()
-                ->from($table)
-                ->where('status = ?', SyncQueueItem::STATUS_PENDING)
-                ->order('queue_id ASC')
-                ->limit(self::BATCH_SIZE)
-        );
+        // Atomically claim a batch: SELECT ... FOR UPDATE the pending rows and flip
+        // them to RUNNING inside one transaction, so a concurrent cron tick blocks
+        // and then sees them as RUNNING — never double-processing the same rows.
+        $conn->beginTransaction();
+        try {
+            $items = $conn->fetchAll(
+                $conn->select()
+                    ->from($table)
+                    ->where('status = ?', SyncQueueItem::STATUS_PENDING)
+                    ->order('queue_id ASC')
+                    ->limit(self::BATCH_SIZE)
+                    ->forUpdate(true)
+            );
+            if (!$items) {
+                $conn->commit();
+                return;
+            }
+            $queueIds = array_map(static fn($r) => (int)$r['queue_id'], $items);
+            $conn->update($table, ['status' => SyncQueueItem::STATUS_RUNNING], ['queue_id IN (?)' => $queueIds]);
+            $conn->commit();
+        } catch (\Throwable $e) {
+            $conn->rollBack();
+            $this->logger->error('[efopt sync queue] batch claim failed: ' . $e->getMessage());
+            return;
+        }
 
-        if (!$items) { return; }
-
+        // Process the claimed batch outside the lock.
         foreach ($items as $row) {
             $queueId = (int)$row['queue_id'];
-            // Mark running so a concurrent tick won't pick the same row.
-            $conn->update($table, ['status' => SyncQueueItem::STATUS_RUNNING], ['queue_id = ?' => $queueId]);
-
             try {
-                $tid = (int)$row['template_id'];
-                $pid = (int)$row['product_id'];
+                $tid    = (int)$row['template_id'];
+                $pid    = (int)$row['product_id'];
+                // Preserve the link source recorded at enqueue time (direct | category).
+                $source = isset($row['source']) && $row['source'] !== '' ? (string)$row['source'] : 'category';
                 if ($row['action'] === SyncQueueItem::ACTION_DESYNC) {
                     $this->syncService->desyncTemplateFromProduct($tid, $pid);
                 } else {
-                    $this->syncService->syncTemplateToProduct($tid, $pid, 'category');
+                    $this->syncService->syncTemplateToProduct($tid, $pid, $source);
                 }
                 $conn->update($table, ['status' => SyncQueueItem::STATUS_DONE], ['queue_id = ?' => $queueId]);
             } catch (\Throwable $e) {

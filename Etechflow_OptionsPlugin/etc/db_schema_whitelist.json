@@ -102,6 +102,7 @@
             "template_id": true,
             "product_id": true,
             "action": true,
+            "source": true,
             "status": true,
             "error_message": true,
             "created_at": true,
