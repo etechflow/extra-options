@@ -137,9 +137,12 @@
                 var opt = sel.querySelector('option[value="' + valId + '"]');
                 if (opt) { sel.value = valId; sel.dispatchEvent(new Event('change', {bubbles: true})); return; }
             }
-            // Radio with matching value
+            // Radio with matching value (name="options[ID]", single-select)
             var radio = document.querySelector('input[type="radio"][name="options[' + optId + ']"][value="' + valId + '"]');
             if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change', {bubbles: true})); return; }
+            // Checkbox with matching value (name="options[ID][]", multi-select)
+            var cb = document.querySelector('input[type="checkbox"][name="options[' + optId + '][]"][value="' + valId + '"]');
+            if (cb) { cb.checked = true; cb.dispatchEvent(new Event('change', {bubbles: true})); return; }
         });
     }
 

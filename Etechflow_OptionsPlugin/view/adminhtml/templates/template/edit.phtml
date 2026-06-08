@@ -114,8 +114,16 @@ $categories    = $block->getCategoryOptions();
                                    value="<?= $escaper->escapeHtmlAttr((string)$o['title']) ?>">
                         </td>
                         <td>
-                            <select name="data[options][<?= $optIndex ?>][type]">
-                                <?php foreach (['drop_down'=>'Drop-down','radio'=>'Radio','checkbox'=>'Checkbox','multiple'=>'Multi-select','field'=>'Text','area'=>'Text Area','file'=>'File Upload'] as $val=>$lbl): ?>
+                            <select name="data[options][<?= $optIndex ?>][type]" class="efopt-type-sel" onchange="window.efoptTypeChanged(this)">
+                                <?php foreach ([
+                                    'drop_down' => 'Drop-down (single select)',
+                                    'radio'     => 'Radio (single select)',
+                                    'checkbox'  => 'Checkbox (multi-select)',
+                                    'multiple'  => 'Multi-select list',
+                                    'field'     => 'Text Field',
+                                    'area'      => 'Text Area',
+                                    'file'      => 'File Upload',
+                                ] as $val => $lbl): ?>
                                     <option value="<?= $val ?>" <?= ($o['type'] ?? '')===$val?'selected':'' ?>><?= $escaper->escapeHtml($lbl) ?></option>
                                 <?php endforeach ?>
                             </select>
@@ -426,26 +434,65 @@ $categories    = $block->getCategoryOptions();
     // doesn't collide with existing rows on submit.
     (function () {
         var nextOptIdx = <?= (int) count($opts) ?>;
+
+        // Build the values-table HTML for a selectable option type. Used both
+        // when adding a new row and when the type is changed on an existing row.
+        function efoptValuesHtml(optIdx) {
+            return '<table class="efopt-values-table">'
+                + '<thead><tr>'
+                + '<th style="width:50px;text-align:center" title="Default selection on storefront">Default</th>'
+                + '<th>Label</th><th style="width:90px">Price</th><th style="width:60px"></th>'
+                + '</tr></thead>'
+                + '<tbody class="efopt-values-tbody"></tbody>'
+                + '<tfoot><tr><td colspan="4" style="text-align:right;padding-top:4px">'
+                + '<button type="button" class="efopt-add-btn" onclick="window.efoptAddValueRow(this,' + optIdx + ')">+ Add Value</button>'
+                + '</td></tr></tfoot>'
+                + '</table>';
+        }
+        var SELECTABLE_TYPES = ['drop_down','radio','checkbox','multiple'];
+
+        // Called when a type dropdown changes on any row (new or existing).
+        window.efoptTypeChanged = function (sel) {
+            var row  = sel.closest('tr.efopt-option-row');
+            var cell = row ? row.querySelector('td:nth-child(5)') : null;
+            if (!cell) return;
+            var optIdx = parseInt(sel.name.match(/\[(\d+)\]/)[1], 10);
+            var type   = sel.value;
+            if (SELECTABLE_TYPES.indexOf(type) >= 0) {
+                // Show values table if not already present.
+                if (!cell.querySelector('table.efopt-values-table')) {
+                    cell.innerHTML = efoptValuesHtml(optIdx);
+                    nextValIdx[optIdx] = nextValIdx[optIdx] || 0;
+                }
+            } else {
+                // Non-selectable type: hide values table.
+                if (!cell.querySelector('input[name*="[values]"]')) {
+                    cell.innerHTML = '<span style="color:#999;font-size:12px">— not applicable for this type —</span>';
+                }
+            }
+        };
+
         window.efoptAddOptionRow = function () {
             var tbody = document.querySelector('#efopt-options-table tbody');
             var html = '<tr class="efopt-option-row">'
                 + '<td><input type="hidden" name="data[options][' + nextOptIdx + '][option_id]" value="">'
                 +     '<input type="text" name="data[options][' + nextOptIdx + '][title]" required></td>'
-                + '<td><select name="data[options][' + nextOptIdx + '][type]">'
-                +     '<option value="drop_down">Drop-down</option>'
-                +     '<option value="radio">Radio</option>'
-                +     '<option value="checkbox">Checkbox</option>'
-                +     '<option value="multiple">Multi-select</option>'
-                +     '<option value="field">Text</option>'
+                + '<td><select name="data[options][' + nextOptIdx + '][type]" class="efopt-type-sel" onchange="window.efoptTypeChanged(this)">'
+                +     '<option value="drop_down">Drop-down (single select)</option>'
+                +     '<option value="radio">Radio (single select)</option>'
+                +     '<option value="checkbox">Checkbox (multi-select)</option>'
+                +     '<option value="multiple">Multi-select list</option>'
+                +     '<option value="field">Text Field</option>'
                 +     '<option value="area">Text Area</option>'
                 +     '<option value="file">File Upload</option>'
                 + '</select></td>'
                 + '<td><input type="checkbox" name="data[options][' + nextOptIdx + '][is_required]" value="1"></td>'
                 + '<td><input type="number" step="0.01" name="data[options][' + nextOptIdx + '][price]"></td>'
-                + '<td><span style="color:#999;font-size:12px">— save first to add values —</span></td>'
+                + '<td>' + efoptValuesHtml(nextOptIdx) + '</td>'
                 + '<td><button type="button" class="efopt-del-btn" onclick="this.closest(\'tr.efopt-option-row\').remove()">× Remove</button></td>'
                 + '</tr>';
             tbody.insertAdjacentHTML('beforeend', html);
+            nextValIdx[nextOptIdx] = 0;
             nextOptIdx++;
         };
 
