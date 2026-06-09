@@ -54,6 +54,21 @@
         return vals;
     }
 
+    // Single-mode checkbox: if the just-changed checkbox belongs to a group the
+    // admin set to "tick only one", clear its siblings RIGHT NOW (before evaluate),
+    // so the show/hide reflects only the new selection — no reliance on another
+    // script's handler order.
+    function enforceSingleMode(target) {
+        if (!target || target.type !== 'checkbox' || !target.checked) { return; }
+        var modes = window.efoptCheckboxModes;
+        if (!modes || typeof modes !== 'object') { return; }
+        var m = (target.name || '').match(/^options\[(\d+)\]\[\]$/);
+        if (!m || modes[m[1]] !== 'single') { return; }
+        document.querySelectorAll('input[type="checkbox"][name="options[' + m[1] + '][]"]').forEach(function (cb) {
+            if (cb !== target) { cb.checked = false; }
+        });
+    }
+
     var registry = [];
 
     function setShown(entry, shown) {
@@ -117,11 +132,13 @@
         var form = document.querySelector('#product_addtocart_form')
             || document.querySelector('form[id^="product_addtocart_form"]')
             || document.body;
-        form.addEventListener('change', function () {
+        form.addEventListener('change', function (e) {
+            // Clear sibling checkboxes for single-mode groups FIRST, then evaluate
+            // against the final selection so the old field hides immediately.
+            enforceSingleMode(e.target);
             evaluate();
-            // Re-evaluate next frame so we also reflect state changed by OTHER
-            // change-handlers — e.g. checkbox single-mode clearing the sibling
-            // box, which happens after this capture-phase listener runs.
+            // Belt-and-braces: re-evaluate next frame in case another handler also
+            // changed the selection after us.
             requestAnimationFrame(evaluate);
         }, true);
 
