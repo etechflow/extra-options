@@ -128,6 +128,14 @@ class SyncService
 
             $isSelectable = in_array((string)$tOpt->getData('type'), ['drop_down', 'radio', 'checkbox', 'multiple'], true);
 
+            // A sub-field (parent_value_id set) is shown on the storefront ONLY
+            // when its parent value is chosen. It must therefore be saved as NOT
+            // required at the Magento level — otherwise native validation would
+            // block add-to-cart while the field is hidden. "Required when shown"
+            // is enforced conditionally on the frontend + buy-request instead.
+            $isSubField = (int)$tOpt->getData('parent_value_id') > 0;
+            $magentoRequire = $isSubField ? 0 : (int)$tOpt->getData('is_required');
+
             // Build values BEFORE the option save so Magento's Select validator
             // sees them. For existing options, also wipe their cached values
             // collection so buildValueObjects rematches against fresh data.
@@ -141,7 +149,7 @@ class SyncService
                 'product_sku'   => $product->getSku(),
                 'title'         => (string)$tOpt->getData('title'),
                 'type'          => (string)$tOpt->getData('type'),
-                'is_require'    => (int)$tOpt->getData('is_required'),
+                'is_require'    => $magentoRequire,
                 'sort_order'    => (int)$tOpt->getData('sort_order'),
                 'price'         => $tOpt->getData('price') !== null ? (float)$tOpt->getData('price') : ($isSelectable ? null : 0),
                 'price_type'    => ((string)$tOpt->getData('price_type') ?: 'fixed'),
@@ -178,7 +186,7 @@ class SyncService
                 $this->resourceConnection->getTableName('catalog_product_option'),
                 [
                     'type'       => (string)$tOpt->getData('type'),
-                    'is_require' => (int)$tOpt->getData('is_required'),
+                    'is_require' => $magentoRequire,
                 ],
                 ['option_id = ?' => $magentoOptionId]
             );

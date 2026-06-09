@@ -82,12 +82,10 @@ class Save extends Action
             $template->setData('description', (string)($data['description'] ?? ''));
             $this->templateRepository->save($template);
 
+            // Options, their values, and the conditional sub-fields nested under
+            // each value are all reconciled in one pass (see syncOptionRows →
+            // syncValueRows → syncSubFields).
             $this->syncOptionRows((int)$template->getId(), $data['options'] ?? []);
-            // Persist sub-options (those with parent_value_id) — they live in
-            // efopt_template_option with parent_value_id pointing to a value of
-            // a sibling option. The admin form posts them at data[sub_options]
-            // keyed by option_id so we can do straight updates.
-            $this->syncSubOptions((int)$template->getId(), $data['sub_options'] ?? []);
 
             // The picker posts CSV strings in `category_ids_csv` / `product_ids_csv`.
             // We also support the legacy array form `category_ids[]` / `product_ids[]`
@@ -150,6 +148,10 @@ class Save extends Action
             ->addFieldToFilter('template_id', $templateId);
         $existingById = [];
         foreach ($existingOptions as $opt) {
+            // Sub-fields (parent_value_id set) are reconciled per-value in
+            // syncValueRows → syncSubFields; exclude them here so the top-level
+            // delete sweep never removes them.
+            if ($opt->getData('parent_value_id')) { continue; }
             $existingById[(int)$opt->getId()] = $opt;
         }
 
@@ -186,8 +188,8 @@ class Save extends Action
             $this->optionResource->save($option);
 
             $seenIds[(int)$option->getId()] = true;
-            // Save values (may assign new IDs to brand-new rows).
-            $valueIdsByIdx = $this->syncValueRows((int)$option->getId(), $row['values'] ?? []);
+            // Save values (may assign new IDs to brand-new rows) + their sub-fields.
+            $valueIdsByIdx = $this->syncValueRows($templateId, (int)$option->getId(), $row['values'] ?? []);
 
             // Now resolve which value got marked as default via the index posted
             // by the form's radio group.
@@ -199,9 +201,11 @@ class Save extends Action
             }
         }
 
-        // Delete options that were removed in the form.
+        // Delete options that were removed in the form — and the conditional
+        // sub-fields hanging off their values (parent_value_id has no DB cascade).
         foreach ($existingById as $id => $opt) {
             if (!isset($seenIds[$id])) {
+                $this->deleteSubFieldsForOption($templateId, (int)$id);
                 $this->optionResource->delete($opt);
             }
         }
@@ -215,7 +219,7 @@ class Save extends Action
      *
      * @return array<int,int>
      */
-    private function syncValueRows(int $optionId, array $valuesPayload): array
+    private function syncValueRows(int $templateId, int $optionId, array $valuesPayload): array
     {
         $existing = $this->valueCollectionFactory->create()
             ->addFieldToFilter('template_option_id', $optionId);
@@ -248,14 +252,98 @@ class Save extends Action
 
             $idsByIdx[(int)$idx] = (int)$value->getId();
             $seenIds[(int)$value->getId()] = true;
+
+            // Reconcile the conditional sub-fields attached to THIS value.
+            $this->syncSubFields($templateId, (int)$value->getId(), $row['sub_fields'] ?? []);
         }
 
         foreach ($existingById as $id => $val) {
             if (!isset($seenIds[$id])) {
+                // Drop the value AND any sub-fields keyed to it (no FK cascade).
+                $this->deleteSubFieldsForValue($templateId, (int)$id);
                 $this->valueResource->delete($val);
             }
         }
         return $idsByIdx;
+    }
+
+    /**
+     * Create / update / delete the conditional sub-fields attached to ONE value.
+     * Each sub-field is an efopt_template_option row with parent_value_id set to
+     * the value's id and a type of field|area|file. On the storefront it is shown
+     * only when this value is selected (see the frontend conditional JS), and is
+     * enforced as required-when-shown if the admin ticked Required.
+     *
+     * @param array<int,mixed> $subFieldsPayload
+     */
+    private function syncSubFields(int $templateId, int $valueId, array $subFieldsPayload): void
+    {
+        $existing = $this->optionCollectionFactory->create()
+            ->addFieldToFilter('template_id', $templateId)
+            ->addFieldToFilter('parent_value_id', $valueId);
+        $existingById = [];
+        foreach ($existing as $opt) {
+            $existingById[(int)$opt->getId()] = $opt;
+        }
+
+        $seen = [];
+        $sort = 0;
+        foreach ($subFieldsPayload as $row) {
+            if (!is_array($row)) { continue; }
+            $title = trim((string)($row['title'] ?? ''));
+            if ($title === '') { continue; }
+
+            $type = (string)($row['type'] ?? 'field');
+            if (!in_array($type, ['field', 'area', 'file'], true)) { $type = 'field'; }
+
+            $optionId = isset($row['option_id']) ? (int)$row['option_id'] : 0;
+            $opt = $optionId && isset($existingById[$optionId])
+                ? $existingById[$optionId]
+                : $this->optionFactory->create();
+
+            $opt->setData('template_id', $templateId);
+            $opt->setData('parent_value_id', $valueId);
+            $opt->setData('sort_order', $sort++);
+            $opt->setData('title', $title);
+            $opt->setData('type', $type);
+            $opt->setData('is_required', (int)($row['is_required'] ?? 0));
+            $opt->setData('price', isset($row['price']) && $row['price'] !== '' ? (float)$row['price'] : null);
+            $opt->setData('price_type', 'fixed');
+            $this->optionResource->save($opt);
+            $seen[(int)$opt->getId()] = true;
+        }
+
+        foreach ($existingById as $id => $opt) {
+            if (!isset($seen[$id])) {
+                $this->optionResource->delete($opt);
+            }
+        }
+    }
+
+    /** Delete all sub-fields attached to a single value. */
+    private function deleteSubFieldsForValue(int $templateId, int $valueId): void
+    {
+        $subs = $this->optionCollectionFactory->create()
+            ->addFieldToFilter('template_id', $templateId)
+            ->addFieldToFilter('parent_value_id', $valueId);
+        foreach ($subs as $opt) {
+            $this->optionResource->delete($opt);
+        }
+    }
+
+    /** Delete all sub-fields attached to any value of a (being-deleted) option. */
+    private function deleteSubFieldsForOption(int $templateId, int $optionId): void
+    {
+        $valueIds = array_map('intval', $this->valueCollectionFactory->create()
+            ->addFieldToFilter('template_option_id', $optionId)
+            ->getAllIds());
+        if (!$valueIds) { return; }
+        $subs = $this->optionCollectionFactory->create()
+            ->addFieldToFilter('template_id', $templateId)
+            ->addFieldToFilter('parent_value_id', ['in' => $valueIds]);
+        foreach ($subs as $opt) {
+            $this->optionResource->delete($opt);
+        }
     }
 
     /**

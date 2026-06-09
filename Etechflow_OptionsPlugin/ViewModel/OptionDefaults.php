@@ -136,4 +136,80 @@ class OptionDefaults implements ArgumentInterface
         }
         return $modes;
     }
+
+    /**
+     * Conditional sub-fields for the current product. Each entry tells the
+     * storefront JS: "show option <sub> only when option <parentOption> has value
+     * <parentValue> selected; make it required-when-shown if <required>".
+     *
+     * Resolves the template linkage (efopt_template_option.parent_value_id →
+     * value → its option) down to the real Magento option_id / option_type_id on
+     * THIS product, so the JS can match by input name + value.
+     *
+     * @return array<int,array{sub:int,parentOption:int,parentValue:int,required:bool,type:string}>
+     */
+    public function getConditionalFields(): array
+    {
+        $product = $this->catalogHelper->getProduct();
+        if (!$product || !$product->getId()) { return []; }
+
+        $conn = $this->resourceConnection->getConnection();
+        $pid  = (int)$product->getId();
+
+        $rows = $conn->fetchAll(
+            $conn->select()
+                ->from(['ep_sub' => $this->resourceConnection->getTableName('efopt_template_product')],
+                    ['sub' => 'ep_sub.magento_option_id'])
+                ->join(
+                    ['eo_sub' => $this->resourceConnection->getTableName('efopt_template_option')],
+                    'ep_sub.template_option_id = eo_sub.option_id',
+                    ['required' => 'eo_sub.is_required', 'type' => 'eo_sub.type', 'parent_value_id' => 'eo_sub.parent_value_id']
+                )
+                ->join(
+                    ['ev' => $this->resourceConnection->getTableName('efopt_template_option_value')],
+                    'ev.value_id = eo_sub.parent_value_id',
+                    ['value_title' => 'ev.title']
+                )
+                ->join(
+                    ['ep_par' => $this->resourceConnection->getTableName('efopt_template_product')],
+                    'ep_par.template_option_id = ev.template_option_id AND ep_par.product_id = ep_sub.product_id',
+                    ['parentOption' => 'ep_par.magento_option_id']
+                )
+                ->where('ep_sub.product_id = ?', $pid)
+                ->where('eo_sub.parent_value_id IS NOT NULL')
+                ->where('ep_sub.magento_option_id IS NOT NULL')
+                ->where('ep_par.magento_option_id IS NOT NULL')
+        );
+        if (!$rows) { return []; }
+
+        $cpovTable      = $this->resourceConnection->getTableName('catalog_product_option_type_value');
+        $cpovTitleTable = $this->resourceConnection->getTableName('catalog_product_option_type_title');
+
+        $out = [];
+        foreach ($rows as $r) {
+            $parentOptionId = (int)$r['parentOption'];
+            // Resolve the parent value's Magento option_type_id by title.
+            $optionTypeId = (int)$conn->fetchOne(
+                $conn->select()
+                    ->from(['v' => $cpovTable], ['option_type_id'])
+                    ->join(
+                        ['t' => $cpovTitleTable],
+                        'v.option_type_id = t.option_type_id AND t.store_id = 0',
+                        []
+                    )
+                    ->where('v.option_id = ?', $parentOptionId)
+                    ->where('LOWER(t.title) = ?', mb_strtolower(trim((string)$r['value_title'])))
+                    ->limit(1)
+            );
+            if (!$optionTypeId) { continue; }
+            $out[] = [
+                'sub'          => (int)$r['sub'],
+                'parentOption' => $parentOptionId,
+                'parentValue'  => $optionTypeId,
+                'required'     => (bool)(int)$r['required'],
+                'type'         => (string)$r['type'],
+            ];
+        }
+        return $out;
+    }
 }

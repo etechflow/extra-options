@@ -8,11 +8,14 @@ if (!$vm) { return; }
 $defaults = $vm->getDefaults();
 $jsSrc      = $block->getViewFileUrl('Etechflow_OptionsPlugin::js/efopt-live-price.js');
 $themeJsSrc = $block->getViewFileUrl('Etechflow_OptionsPlugin::js/efopt-theme-adopt.js');
+$condJsSrc  = $block->getViewFileUrl('Etechflow_OptionsPlugin::js/efopt-conditional.js');
 ?>
 <script>
     window.efoptTemplateDefaults = <?= /* @noEscape */ json_encode((object) $defaults) ?>;
     window.efoptCheckboxModes = <?= /* @noEscape */ json_encode((object) $vm->getCheckboxModes()) ?>;
     window.efoptAppearance = <?= /* @noEscape */ json_encode((object) $vm->getAppearance()) ?>;
+    window.efoptConditionalFields = <?= /* @noEscape */ json_encode($vm->getConditionalFields()) ?>;
 </script>
 <script src="<?= $escaper->escapeUrl($jsSrc) ?>" defer></script>
 <script src="<?= $escaper->escapeUrl($themeJsSrc) ?>" defer></script>
+<script src="<?= $escaper->escapeUrl($condJsSrc) ?>" defer></script>
