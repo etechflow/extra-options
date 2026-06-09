@@ -3,7 +3,10 @@ declare(strict_types=1);
 
 namespace Etechflow\OptionsPlugin\Model;
 
+use Magento\Catalog\Model\Product;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DataObject;
+use Magento\Framework\Event\ManagerInterface as EventManager;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -22,7 +25,8 @@ class BulkPriceService
 {
     public function __construct(
         private readonly ResourceConnection $resourceConnection,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
+        private readonly EventManager $eventManager
     ) {}
 
     /**
@@ -94,25 +98,27 @@ class BulkPriceService
                     ->where('magento_option_id IS NOT NULL')
             );
 
-            // Group magento_option_ids by template_option_id
+            // Group magento_option_ids by template_option_id; track affected products.
             $magOptIdsByTplOpt = [];
             $magOptIds = [];
+            $affectedProductIds = [];
             foreach ($links as $row) {
                 $magOptIdsByTplOpt[(int)$row['template_option_id']][] = (int)$row['magento_option_id'];
                 $magOptIds[] = (int)$row['magento_option_id'];
+                $affectedProductIds[(int)$row['product_id']] = true;
             }
 
-            // Update option-level prices (text/file/area types)
+            // Update option-level prices (text/file/area types). Upsert so a price
+            // row is CREATED when the option had none before (a plain UPDATE would
+            // match 0 rows and silently leave the product price unchanged).
             foreach ($optionPrices as $tplOptionId => $newPrice) {
                 $tid = (int)$tplOptionId;
-                if (!isset($magOptIdsByTplOpt[$tid])) { continue; }
-                if (!is_numeric($newPrice)) { continue; }
-                $count = $conn->update(
-                    $cpOptionTable,
-                    ['price' => (float)$newPrice],
-                    ['option_id IN (?)' => $magOptIdsByTplOpt[$tid]]
-                );
-                $rowsAffected += (int)$count;
+                if (!isset($magOptIdsByTplOpt[$tid]) || !is_numeric($newPrice)) { continue; }
+                $upsert = [];
+                foreach ($magOptIdsByTplOpt[$tid] as $oid) {
+                    $upsert[] = ['option_id' => (int)$oid, 'store_id' => 0, 'price' => (float)$newPrice, 'price_type' => 'fixed'];
+                }
+                $rowsAffected += (int)$conn->insertOnDuplicate($cpOptionTable, $upsert, ['price']);
             }
 
             // Update value-level prices (select types) — match by title since
@@ -141,20 +147,41 @@ class BulkPriceService
                             ->where('t.title = ?', $title)
                     );
                     if (!$valueIds) { continue; }
-                    $count = $conn->update(
-                        $cpoTypeValTable,
-                        ['price' => (float)$price],
-                        ['option_type_id IN (?)' => $valueIds]
-                    );
-                    $rowsAffected += (int)$count;
+                    $upsert = [];
+                    foreach ($valueIds as $otid) {
+                        $upsert[] = ['option_type_id' => (int)$otid, 'store_id' => 0, 'price' => (float)$price, 'price_type' => 'fixed'];
+                    }
+                    // Upsert (create-or-update) so values that were £0 — and so had
+                    // no price row — still receive the new price on the product.
+                    $rowsAffected += (int)$conn->insertOnDuplicate($cpoTypeValTable, $upsert, ['price']);
                 }
             }
 
             $conn->commit();
+
+            // Bust the per-product cache so the storefront/full-page cache reflects
+            // the new prices without a manual flush (raw SQL bypasses the save flow
+            // that would normally invalidate it).
+            $this->bustCache(array_keys($affectedProductIds));
+
             return $rowsAffected;
         } catch (\Throwable $e) {
             $conn->rollBack();
             throw $e;
+        }
+    }
+
+    /** @param int[] $productIds */
+    private function bustCache(array $productIds): void
+    {
+        foreach ($productIds as $pid) {
+            try {
+                $this->eventManager->dispatch('clean_cache_by_tags', [
+                    'object' => new DataObject(['identities' => [Product::CACHE_TAG . '_' . (int)$pid]]),
+                ]);
+            } catch (\Throwable $e) {
+                $this->logger->warning('[efopt bulk price] cache clean failed for product ' . $pid . ': ' . $e->getMessage());
+            }
         }
     }
 }
