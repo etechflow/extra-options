@@ -172,12 +172,21 @@
     }
 
     function init() {
-        var target = findPriceTarget();
-        if (!target) return;          // not a PDP
-        window._efoptBase = getBasePrice();
-        window._efoptCurrencyPrefix = detectCurrencyPrefix(target);
+        // Default pre-selection + checkbox single-mode run on EVERY theme.
+        enforceCheckboxModes();
+        applyDefaults();
 
-        // Listen on the product form for any change.
+        // Live price recompute is ONLY for the Keystation theme's custom price
+        // element (.ks-price-now-amt). On Luma / Adobe Commerce / Hyvä, Magento's
+        // own price widget already updates the displayed price from the option
+        // prices — overwriting it here fights the native update and can freeze the
+        // price at the base value. So bail out and let Magento handle it.
+        var ksTarget = document.querySelector('.ks-price-now-amt');
+        if (!ksTarget) { return; }
+
+        window._efoptBase = getBasePrice();
+        window._efoptCurrencyPrefix = detectCurrencyPrefix(ksTarget);
+
         var form = document.querySelector('form[id^="product_addtocart_form"]')
             || document.querySelector('#product_addtocart_form')
             || document.body;
@@ -187,10 +196,6 @@
                 updatePrice();
             }
         }, true);
-
-        enforceCheckboxModes();
-        applyDefaults();
-        // One initial recompute in case defaults were applied.
         updatePrice();
     }
 
