@@ -110,6 +110,16 @@ class Save extends Action
                 $preserve
             );
 
+            // Re-push the (possibly changed) template options to every already-linked
+            // product. Without this, changing an option type (e.g. radio → checkbox)
+            // only updates efopt_template_option — the catalog_product_option rows on
+            // existing products keep the old type and the frontend keeps rendering radio.
+            // syncCategoryLinks / syncProductLinks only fire for newly-added links, so
+            // existing products were never updated on a plain save.
+            if ($id > 0) {
+                $this->syncService->resyncAll((int)$template->getId());
+            }
+
             $this->messageManager->addSuccessMessage(__('Template saved.'));
             $this->dataPersistor->clear('efopt_template');
 
