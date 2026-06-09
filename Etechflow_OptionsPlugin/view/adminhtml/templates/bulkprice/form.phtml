@@ -48,13 +48,17 @@ $categories = $block->getCategoryOptions();
             <h3><?= $escaper->escapeHtml(__('2. Pick scope (categories AND/OR products that have this template synced)')) ?></h3>
             <div class="efopt-bulk-grid">
                 <div>
-                    <label><?= $escaper->escapeHtml(__('Categories')) ?></label>
+                    <label><?= $escaper->escapeHtml(__('Categories')) ?> <span style="color:#9CA3AF;font-weight:400">(<?= $escaper->escapeHtml(__('only categories this template is in')) ?>)</span></label>
                     <select name="category_ids[]" multiple>
                         <?php foreach ($categories as $cid => $label): ?>
                             <option value="<?= (int)$cid ?>"><?= $escaper->escapeHtml($label) ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <small><?= $escaper->escapeHtml(__('Hold Ctrl/Cmd to select multiple. All products in selected categories that have this template synced will be updated.')) ?></small>
+                    <?php if ($categories): ?>
+                        <small><?= $escaper->escapeHtml(__('Hold Ctrl/Cmd to select multiple. All products in selected categories that have this template synced will be updated.')) ?></small>
+                    <?php else: ?>
+                        <small style="color:#92400E"><?= $escaper->escapeHtml(__('This template\'s products aren\'t in any category — use the product IDs field on the right instead.')) ?></small>
+                    <?php endif; ?>
                 </div>
                 <div>
                     <label><?= $escaper->escapeHtml(__('Or specific product IDs (comma-separated)')) ?></label>

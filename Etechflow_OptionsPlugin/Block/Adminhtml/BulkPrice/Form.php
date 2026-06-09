@@ -91,10 +91,40 @@ class Form extends Template
         return $this->getUrl('efopt/bulkprice/save');
     }
 
-    /** @return array<int,string> category_id → path-formatted display name */
+    /**
+     * Category options for the picker. When a template is selected, restrict the
+     * list to categories that ACTUALLY contain a product linked to that template
+     * (plus any category the template is directly linked to) — picking anything
+     * else would update nothing. With no template selected, returns all.
+     *
+     * @return array<int,string> category_id → path-formatted display name
+     */
     public function getCategoryOptions(): array
     {
         $conn = $this->resourceConnection->getConnection();
+
+        $allow = null; // null = no restriction
+        $templateId = $this->getSelectedTemplateId();
+        if ($templateId) {
+            $viaProducts = $conn->fetchCol(
+                $conn->select()
+                    ->from(['ccp' => $this->resourceConnection->getTableName('catalog_category_product')], 'category_id')
+                    ->join(
+                        ['etp' => $this->resourceConnection->getTableName('efopt_template_product')],
+                        'ccp.product_id = etp.product_id',
+                        []
+                    )
+                    ->where('etp.template_id = ?', $templateId)
+                    ->distinct()
+            );
+            $direct = $conn->fetchCol(
+                $conn->select()
+                    ->from($this->resourceConnection->getTableName('efopt_template_category'), 'category_id')
+                    ->where('template_id = ?', $templateId)
+            );
+            $allow = array_flip(array_map('intval', array_merge($viaProducts, $direct)));
+        }
+
         $table = $this->resourceConnection->getTableName('catalog_category_entity_varchar');
         $rows = $conn->fetchAll(
             $conn->select()
@@ -116,6 +146,7 @@ class Form extends Template
         }
         $result = [];
         foreach ($byId as $id => $r) {
+            if ($allow !== null && !isset($allow[$id])) { continue; } // restrict to template's categories
             $pathIds = explode('/', (string)$r['path']);
             $names = [];
             foreach ($pathIds as $pid) {
