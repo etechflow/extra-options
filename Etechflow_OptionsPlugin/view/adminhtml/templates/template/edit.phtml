@@ -146,13 +146,9 @@ $categories    = $block->getCategoryOptions();
                             <span class="efopt-cap"><?= $escaper->escapeHtml(__('Type')) ?></span>
                             <select name="data[options][<?= $optIndex ?>][type]" class="efopt-type-sel" onchange="window.efoptTypeChanged(this)">
                                 <?php foreach ([
-                                    'drop_down' => 'Drop-down (single select)',
-                                    'radio'     => 'Radio (single select)',
+                                    'drop_down' => 'Drop-down',
+                                    'radio'     => 'Radio',
                                     'checkbox'  => 'Checkbox',
-                                    'multiple'  => 'Multi-select list',
-                                    'field'     => 'Text Field',
-                                    'area'      => 'Text Area',
-                                    'file'      => 'File Upload',
                                 ] as $val => $lbl): ?>
                                     <option value="<?= $val ?>" <?= ($o['type'] ?? '')===$val?'selected':'' ?>><?= $escaper->escapeHtml($lbl) ?></option>
                                 <?php endforeach ?>
@@ -531,9 +527,7 @@ $categories    = $block->getCategoryOptions();
                 +     '<input type="text" required name="' + b + '[title]"></div>'
                 +   '<div class="efopt-fld efopt-fld-type"><span class="efopt-cap">Type</span>'
                 +     '<select class="efopt-type-sel" onchange="window.efoptTypeChanged(this)" name="' + b + '[type]">'
-                +       '<option value="drop_down">Drop-down (single select)</option><option value="radio">Radio (single select)</option>'
-                +       '<option value="checkbox">Checkbox</option><option value="multiple">Multi-select list</option>'
-                +       '<option value="field">Text Field</option><option value="area">Text Area</option><option value="file">File Upload</option>'
+                +       '<option value="drop_down">Drop-down</option><option value="radio">Radio</option><option value="checkbox">Checkbox</option>'
                 +     '</select>'
                 +     '<select class="efopt-cb-mode" name="' + b + '[checkbox_mode]" style="margin-top:5px;font-size:11px;display:none"><option value="multi">↳ Customer can tick MULTIPLE</option><option value="single">↳ Customer can tick ONLY ONE</option></select>'
                 +   '</div>'

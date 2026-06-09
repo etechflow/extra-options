@@ -170,10 +170,14 @@ class Save extends Action
             // Space top-level options 1000 apart so each option's conditional
             // sub-fields can slot in right after it (parentSort + 1, +2 …).
             $optSort = ($sort++) * 1000;
+            // Top-level options are selectable only (Drop-down / Radio / Checkbox);
+            // text/file/image inputs are added as conditional sub-fields under values.
+            $optType = (string)($row['type'] ?? 'drop_down');
+            if (!in_array($optType, ['drop_down', 'radio', 'checkbox'], true)) { $optType = 'drop_down'; }
             $option->setData('template_id', $templateId);
             $option->setData('sort_order', $optSort);
             $option->setData('title', $title);
-            $option->setData('type', (string)($row['type'] ?? 'drop_down'));
+            $option->setData('type', $optType);
             // Checkbox sub-mode: 'single' makes the storefront enforce exactly one
             // tick (radio-like) while keeping the checkbox look. Only meaningful for
             // type=checkbox; stored as 'multi' otherwise so the column is always sane.
