@@ -117,7 +117,13 @@
         var form = document.querySelector('#product_addtocart_form')
             || document.querySelector('form[id^="product_addtocart_form"]')
             || document.body;
-        form.addEventListener('change', evaluate, true);
+        form.addEventListener('change', function () {
+            evaluate();
+            // Re-evaluate next frame so we also reflect state changed by OTHER
+            // change-handlers — e.g. checkbox single-mode clearing the sibling
+            // box, which happens after this capture-phase listener runs.
+            requestAnimationFrame(evaluate);
+        }, true);
 
         evaluate(); // initial state — also reveals fields for any pre-selected default
     }
