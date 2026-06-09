@@ -167,8 +167,11 @@ class Save extends Action
                 ? $existingById[$optionId]
                 : $this->optionFactory->create();
 
+            // Space top-level options 1000 apart so each option's conditional
+            // sub-fields can slot in right after it (parentSort + 1, +2 …).
+            $optSort = ($sort++) * 1000;
             $option->setData('template_id', $templateId);
-            $option->setData('sort_order', $sort++);
+            $option->setData('sort_order', $optSort);
             $option->setData('title', $title);
             $option->setData('type', (string)($row['type'] ?? 'drop_down'));
             // Checkbox sub-mode: 'single' makes the storefront enforce exactly one
@@ -189,7 +192,7 @@ class Save extends Action
 
             $seenIds[(int)$option->getId()] = true;
             // Save values (may assign new IDs to brand-new rows) + their sub-fields.
-            $valueIdsByIdx = $this->syncValueRows($templateId, (int)$option->getId(), $row['values'] ?? []);
+            $valueIdsByIdx = $this->syncValueRows($templateId, (int)$option->getId(), $row['values'] ?? [], $optSort);
 
             // Now resolve which value got marked as default via the index posted
             // by the form's radio group.
@@ -234,7 +237,7 @@ class Save extends Action
      *
      * @return array<int,int>
      */
-    private function syncValueRows(int $templateId, int $optionId, array $valuesPayload): array
+    private function syncValueRows(int $templateId, int $optionId, array $valuesPayload, int $parentSort = 0): array
     {
         $existing = $this->valueCollectionFactory->create()
             ->addFieldToFilter('template_option_id', $optionId);
@@ -269,7 +272,7 @@ class Save extends Action
             $seenIds[(int)$value->getId()] = true;
 
             // Reconcile the conditional sub-fields attached to THIS value.
-            $this->syncSubFields($templateId, (int)$value->getId(), $row['sub_fields'] ?? []);
+            $this->syncSubFields($templateId, (int)$value->getId(), $row['sub_fields'] ?? [], $parentSort);
         }
 
         foreach ($existingById as $id => $val) {
@@ -291,7 +294,7 @@ class Save extends Action
      *
      * @param array<int,mixed> $subFieldsPayload
      */
-    private function syncSubFields(int $templateId, int $valueId, array $subFieldsPayload): void
+    private function syncSubFields(int $templateId, int $valueId, array $subFieldsPayload, int $parentSort = 0): void
     {
         $existing = $this->optionCollectionFactory->create()
             ->addFieldToFilter('template_id', $templateId)
@@ -324,9 +327,10 @@ class Save extends Action
 
             $opt->setData('template_id', $templateId);
             $opt->setData('parent_value_id', $valueId);
-            // Render sub-fields AFTER the top-level options (which sort 0,1,2…) so a
-            // conditional field appears below its parent dropdown, never above it.
-            $opt->setData('sort_order', 1000 + $sort++);
+            // Slot the sub-field right AFTER its parent option (parentSort + 1, +2 …)
+            // so the conditional field appears directly below its own dropdown,
+            // not at the very bottom of the option list.
+            $opt->setData('sort_order', $parentSort + 1 + $sort++);
             $opt->setData('title', $title);
             $opt->setData('type', $type);
             $opt->setData('is_required', (int)($row['is_required'] ?? 0));
