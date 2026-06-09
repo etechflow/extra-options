@@ -56,6 +56,17 @@ class SyncService
      * @param string $source 'direct' (set explicitly per-product) or 'category' (resolved via category link)
      * @param int|null $sourceCategoryId  Resolving category if source==='category'
      */
+    /**
+     * Translate a friendly template option type into a valid Magento custom-option
+     * type. 'number' renders as a text field (made numeric on the storefront by JS);
+     * 'image' is a file upload restricted to image extensions. All real Magento
+     * types pass through unchanged.
+     */
+    private function toMagentoType(string $templateType): string
+    {
+        return ['number' => 'field', 'image' => 'file'][$templateType] ?? $templateType;
+    }
+
     public function syncTemplateToProduct(
         int $templateId,
         int $productId,
@@ -126,7 +137,14 @@ class SyncService
                 }
             }
 
-            $isSelectable = in_array((string)$tOpt->getData('type'), ['drop_down', 'radio', 'checkbox', 'multiple'], true);
+            // Friendly template types are translated to real Magento option types:
+            // 'number' → 'field' (text), 'image' → 'file'. Everything else passes
+            // through. The friendly type stays on the template so the admin editor
+            // and the storefront JS (number input / image accept) can use it.
+            $templateType = (string)$tOpt->getData('type');
+            $magentoType  = $this->toMagentoType($templateType);
+
+            $isSelectable = in_array($magentoType, ['drop_down', 'radio', 'checkbox', 'multiple'], true);
 
             // A sub-field (parent_value_id set) is shown on the storefront ONLY
             // when its parent value is chosen. It must therefore be saved as NOT
@@ -141,6 +159,12 @@ class SyncService
             // collection so buildValueObjects rematches against fresh data.
             $newValues = $isSelectable ? $this->buildValueObjects($tOptId, $productOption) : [];
 
+            // An "Image Upload" sub-field is a file option restricted to images.
+            $fileExtension = $tOpt->getData('file_extension');
+            if ($templateType === 'image' && ($fileExtension === null || $fileExtension === '')) {
+                $fileExtension = 'jpg,jpeg,png,gif,webp,svg';
+            }
+
             // Use addData (NOT setData) so we don't wipe the option_id loaded
             // above. setData replaces the entire data array — losing the ID
             // makes Magento think this is a new option and creates a duplicate.
@@ -148,7 +172,7 @@ class SyncService
                 'product_id'    => $productId,
                 'product_sku'   => $product->getSku(),
                 'title'         => (string)$tOpt->getData('title'),
-                'type'          => (string)$tOpt->getData('type'),
+                'type'          => $magentoType,
                 'is_require'    => $magentoRequire,
                 'sort_order'    => (int)$tOpt->getData('sort_order'),
                 'price'         => $tOpt->getData('price') !== null ? (float)$tOpt->getData('price') : ($isSelectable ? null : 0),
@@ -157,7 +181,7 @@ class SyncService
                 'max_characters'=> $tOpt->getData('max_characters'),
                 'image_size_x'  => $tOpt->getData('image_size_x'),
                 'image_size_y'  => $tOpt->getData('image_size_y'),
-                'file_extension'=> $tOpt->getData('file_extension'),
+                'file_extension'=> $fileExtension,
             ]);
             // Belt-and-braces: explicitly preserve the loaded ID.
             if ($magentoOptionId) {
@@ -185,7 +209,7 @@ class SyncService
             $conn->update(
                 $this->resourceConnection->getTableName('catalog_product_option'),
                 [
-                    'type'       => (string)$tOpt->getData('type'),
+                    'type'       => $magentoType,
                     'is_require' => $magentoRequire,
                 ],
                 ['option_id = ?' => $magentoOptionId]

@@ -293,11 +293,14 @@ class Save extends Action
             $title = trim((string)($row['title'] ?? ''));
             if ($title === '') { continue; }
 
+            // Sub-fields are input types only (no drop-down/radio/checkbox). The
+            // friendly types 'number' and 'image' are stored as-is on the template
+            // and translated to real Magento types (field / file) at sync time.
             $type = (string)($row['type'] ?? 'field');
-            if (!in_array($type, ['field', 'area', 'file', 'drop_down', 'radio', 'checkbox', 'multiple'], true)) {
+            if (!in_array($type, ['field', 'number', 'area', 'file', 'image', 'date', 'time', 'date_time'], true)) {
                 $type = 'field';
             }
-            $isSelectable = in_array($type, ['drop_down', 'radio', 'checkbox', 'multiple'], true);
+            $isSelectable = false;
 
             $optionId = isset($row['option_id']) ? (int)$row['option_id'] : 0;
             $opt = $optionId && isset($existingById[$optionId])

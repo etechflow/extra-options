@@ -95,6 +95,17 @@
                 container.querySelectorAll('input, textarea, select').forEach(function (i) { inputs.push(i); });
             }
             if (!inputs.length) { inputs = [el]; }
+            // Friendly field types: 'number' → numeric text input; 'image' → file
+            // input restricted to images. (Magento stores these as field/file.)
+            if (cf.type === 'number') {
+                inputs.forEach(function (i) {
+                    if (i.tagName === 'INPUT' && i.type === 'text') { i.type = 'number'; i.setAttribute('inputmode', 'decimal'); }
+                });
+            } else if (cf.type === 'image') {
+                inputs.forEach(function (i) {
+                    if (i.tagName === 'INPUT' && i.type === 'file') { i.setAttribute('accept', 'image/*'); }
+                });
+            }
             registry.push({ cf: cf, container: container, inputs: inputs, origDisplay: '' });
         });
         if (!registry.length) { return; }

@@ -209,7 +209,7 @@ $categories    = $block->getCategoryOptions();
                                                                 </label>
                                                                 <label class="efopt-sf-lbl"><?= $escaper->escapeHtml(__('Type')) ?>
                                                                     <select class="efopt-subtype" onchange="window.efoptSubTypeChanged(this)" name="<?= $subBase ?>[type]">
-                                                                        <?php foreach (['field'=>'Text','area'=>'Text Area','file'=>'File Upload','drop_down'=>'Drop-down','radio'=>'Radio','checkbox'=>'Checkbox'] as $tval=>$tlbl): ?>
+                                                                        <?php foreach (['field'=>'Text','number'=>'Number','area'=>'Text Area','file'=>'File Upload','image'=>'Image Upload','date'=>'Date','time'=>'Time'] as $tval=>$tlbl): ?>
                                                                             <option value="<?= $tval ?>" <?= $subType===$tval?'selected':'' ?>><?= $escaper->escapeHtml($tlbl) ?></option>
                                                                         <?php endforeach ?>
                                                                     </select>
@@ -597,8 +597,7 @@ $categories    = $block->getCategoryOptions();
                 +     '<input type="text" placeholder="e.g. Enter code" name="' + base + '[title]"></label>'
                 +   '<label class="efopt-sf-lbl">Type'
                 +     '<select class="efopt-subtype" onchange="window.efoptSubTypeChanged(this)" name="' + base + '[type]">'
-                +       '<option value="field">Text</option><option value="area">Text Area</option><option value="file">File Upload</option>'
-                +       '<option value="drop_down">Drop-down</option><option value="radio">Radio</option><option value="checkbox">Checkbox</option>'
+                +       '<option value="field">Text</option><option value="number">Number</option><option value="area">Text Area</option><option value="file">File Upload</option><option value="image">Image Upload</option><option value="date">Date</option><option value="time">Time</option>'
                 +     '</select></label>'
                 +   '<label class="efopt-sf-lbl efopt-sf-check"><input type="checkbox" name="' + base + '[is_required]" value="1"> Required</label>'
                 +   '<label class="efopt-sf-lbl">Price<input type="number" step="0.01" placeholder="0.00" name="' + base + '[price]"></label>'
