@@ -27,6 +27,9 @@
                     <resource id="Etechflow_OptionsPlugin::migration"
                               title="Migration Tool"
                               sortOrder="30"/>
+                    <resource id="Etechflow_OptionsPlugin::license"
+                              title="License"
+                              sortOrder="40"/>
                 </resource>
 
                 <!-- Existing Stores → Configuration → eTechFlow resource (unchanged) -->

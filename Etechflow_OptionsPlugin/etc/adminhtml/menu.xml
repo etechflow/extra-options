@@ -34,5 +34,13 @@
              sortOrder="30"
              resource="Etechflow_OptionsPlugin::migration"
              action="efopt/migration/index"/>
+
+        <add id="Etechflow_OptionsPlugin::license"
+             title="License"
+             module="Etechflow_OptionsPlugin"
+             parent="Etechflow_OptionsPlugin::root"
+             sortOrder="40"
+             resource="Etechflow_OptionsPlugin::license"
+             action="efopt/license/gate"/>
     </menu>
 </config>

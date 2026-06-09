@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <!-- Gate every admin page under the `efopt` route behind the licence
+         (the licence controllers exclude themselves). Admin area only. -->
+    <event name="controller_action_predispatch_efopt">
+        <observer name="etechflow_optionsplugin_admin_license_gate"
+                  instance="Etechflow\OptionsPlugin\Observer\AdminLicenseGate"/>
+    </event>
+</config>

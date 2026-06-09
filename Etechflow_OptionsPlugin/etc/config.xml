@@ -3,6 +3,24 @@
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
         <etechflow_options>
+            <license>
+                <license_key></license_key>
+                <production_environment>1</production_environment>
+                <portal_url></portal_url>
+                <portal_api_url></portal_api_url>
+                <issued_key></issued_key>
+                <issued_at>0</issued_at>
+                <issued_domain></issued_domain>
+                <issued_plan></issued_plan>
+                <stripe_session_id></stripe_session_id>
+                <revoked>0</revoked>
+                <ip_blocked>0</ip_blocked>
+            </license>
+            <payment>
+                <stripe_secret_key></stripe_secret_key>
+                <stripe_publishable_key></stripe_publishable_key>
+                <stripe_currency>usd</stripe_currency>
+            </payment>
             <general>
                 <enabled>1</enabled>
                 <mode>standard</mode>

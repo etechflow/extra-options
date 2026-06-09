@@ -16,6 +16,84 @@
             <tab>etechflow</tab>
             <resource>Etechflow_OptionsPlugin::config</resource>
 
+            <group id="module_status" translate="label" type="text" sortOrder="1"
+                   showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Module Status</label>
+                <frontend_model>Etechflow\OptionsPlugin\Block\Adminhtml\System\Config\ModuleStatus</frontend_model>
+            </group>
+
+            <group id="license" translate="label" type="text" sortOrder="5"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>License</label>
+
+                <field id="production_environment" translate="label comment" type="select"
+                       sortOrder="5" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Production Environment</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[
+                        <strong>Yes</strong> = live site. License key required to use the admin Option-Templates tools.<br/>
+                        <strong>No</strong> = dev/staging. Admin tools run without a key.
+                    ]]></comment>
+                </field>
+
+                <field id="license_key" translate="label comment" type="text"
+                       sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>License Key</label>
+                    <comment><![CDATA[
+                        Auto-populated after Stripe purchase. Format: <code>SP-XXXX-XXXX-XXXX-XXXX</code>.<br/>
+                        Bound to your domain. <code>www.</code> prefix normalised — one key works for both.
+                    ]]></comment>
+                </field>
+
+                <field id="portal_url" translate="label comment" type="text"
+                       sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>License Portal URL</label>
+                    <comment><![CDATA[
+                        URL of the eTechFlow license portal. Called by the Magento server to validate
+                        SP-XXXX keys and complete Stripe activation.<br/>
+                        Example: <code>https://your-tunnel.ngrok-free.dev</code> or your production portal URL.
+                    ]]></comment>
+                </field>
+
+                <field id="portal_api_url" translate="label comment" type="text"
+                       sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>License Validation API URL (optional override)</label>
+                    <comment><![CDATA[
+                        Optional override for the server-to-server validation URL.
+                        If blank, the Portal URL above is used.
+                    ]]></comment>
+                </field>
+            </group>
+
+            <group id="payment" translate="label" type="text" sortOrder="7"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Payment (Stripe)</label>
+                <comment><![CDATA[Add your Stripe REST API credentials to enable "Select Plan &amp; Pay" on the gate page. Get them at https://dashboard.stripe.com/test/apikeys.]]></comment>
+
+                <field id="stripe_secret_key" translate="label" type="obscure"
+                       sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Stripe Secret Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment><![CDATA[
+                        <code>sk_test_...</code> or <code>sk_live_...</code>. Stored encrypted by Magento.
+                    ]]></comment>
+                </field>
+
+                <field id="stripe_publishable_key" translate="label" type="text"
+                       sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Stripe Publishable Key</label>
+                    <comment><![CDATA[
+                        <code>pk_test_...</code> or <code>pk_live_...</code>. Public — safe to display.
+                    ]]></comment>
+                </field>
+
+                <field id="stripe_currency" translate="label" type="text"
+                       sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Currency</label>
+                    <comment><![CDATA[Three-letter Stripe currency code, lowercase. Default: <code>usd</code>.]]></comment>
+                </field>
+            </group>
+
             <group id="general" translate="label" type="text" sortOrder="10"
                    showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>General</label>
