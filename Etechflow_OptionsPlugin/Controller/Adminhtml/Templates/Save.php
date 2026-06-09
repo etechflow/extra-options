@@ -206,9 +206,24 @@ class Save extends Action
         foreach ($existingById as $id => $opt) {
             if (!isset($seenIds[$id])) {
                 $this->deleteSubFieldsForOption($templateId, (int)$id);
-                $this->optionResource->delete($opt);
+                $this->purgeTemplateOption($opt);
             }
         }
+    }
+
+    /**
+     * Delete a template option AND first remove every product-side option it was
+     * synced to. Order matters: the efopt_template_product FK cascades when the
+     * template option row is deleted, so we must clean the products (via the
+     * links' magento_option_id) BEFORE deleting the row — otherwise the storefront
+     * options are orphaned and stay visible.
+     *
+     * @param \Etechflow\OptionsPlugin\Model\Template\Option $opt
+     */
+    private function purgeTemplateOption($opt): void
+    {
+        $this->syncService->removeTemplateOptionEverywhere((int)$opt->getId());
+        $this->optionResource->delete($opt);
     }
 
     /**
@@ -328,7 +343,7 @@ class Save extends Action
 
         foreach ($existingById as $id => $opt) {
             if (!isset($seen[$id])) {
-                $this->optionResource->delete($opt);
+                $this->purgeTemplateOption($opt);
             }
         }
     }
@@ -384,7 +399,7 @@ class Save extends Action
             ->addFieldToFilter('template_id', $templateId)
             ->addFieldToFilter('parent_value_id', $valueId);
         foreach ($subs as $opt) {
-            $this->optionResource->delete($opt);
+            $this->purgeTemplateOption($opt);
         }
     }
 
@@ -399,7 +414,7 @@ class Save extends Action
             ->addFieldToFilter('template_id', $templateId)
             ->addFieldToFilter('parent_value_id', ['in' => $valueIds]);
         foreach ($subs as $opt) {
-            $this->optionResource->delete($opt);
+            $this->purgeTemplateOption($opt);
         }
     }
 

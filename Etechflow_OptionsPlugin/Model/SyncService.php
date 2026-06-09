@@ -462,6 +462,50 @@ class SyncService
     }
 
     /**
+     * Remove ONE template option (e.g. a deleted sub-field) from EVERY product it
+     * was synced to: delete the catalog_product_option, drop the link, refresh
+     * flags + cache.
+     *
+     * MUST run BEFORE the efopt_template_option row is deleted. The
+     * efopt_template_product FK cascades on the template option, so once the
+     * template row is gone the links (and their magento_option_id) are wiped too —
+     * leaving the product-side option orphaned and still visible on the storefront.
+     * Calling this first captures those ids and cleans the products properly.
+     */
+    public function removeTemplateOptionEverywhere(int $templateOptionId): void
+    {
+        if ($templateOptionId <= 0) { return; }
+        $conn = $this->resourceConnection->getConnection();
+        $linkTable = $this->resourceConnection->getTableName('efopt_template_product');
+
+        $links = $conn->fetchAll(
+            $conn->select()->from($linkTable, ['product_id', 'magento_option_id'])
+                ->where('template_option_id = ?', $templateOptionId)
+        );
+        if (!$links) { return; }
+
+        $productIds = [];
+        foreach ($links as $row) {
+            $magentoOptionId = (int)$row['magento_option_id'];
+            if ($magentoOptionId) {
+                $opt = $this->productOptionFactory->create()->load($magentoOptionId);
+                if ($opt->getId()) {
+                    try {
+                        $opt->delete();
+                    } catch (\Throwable $e) {
+                        $this->logger->warning('[efopt] could not delete product option ' . $magentoOptionId . ': ' . $e->getMessage());
+                    }
+                }
+            }
+            $productIds[(int)$row['product_id']] = true;
+        }
+        $conn->delete($linkTable, ['template_option_id = ?' => $templateOptionId]);
+        foreach (array_keys($productIds) as $pid) {
+            $this->refreshProductFlags((int)$pid);
+        }
+    }
+
+    /**
      * Remove all options that were synced from this template onto this product.
      * Does NOT touch other options that may have been added manually.
      */
