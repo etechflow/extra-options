@@ -23,10 +23,14 @@
         else { document.addEventListener('DOMContentLoaded', fn); }
     }
 
-    // Any DOM element that belongs to option <optId> (text/area/file/select/etc.).
+    // Any DOM element that belongs to option <optId>. Covers selectable/text
+    // names (options[ID]) AND file-option names (options_ID_file) plus the
+    // multi-file widget's hidden field (options_ID_etmm_multi).
     function ctrlEl(optId) {
         return document.querySelector(
-            '[name="options[' + optId + ']"], [name="options[' + optId + '][]"], [name^="options[' + optId + ']["]'
+            '[name="options[' + optId + ']"], [name="options[' + optId + '][]"], '
+            + '[name^="options[' + optId + ']["], '
+            + '[name="options_' + optId + '_file"], [name="options_' + optId + '_etmm_multi"]'
         );
     }
     function containerOf(el) {

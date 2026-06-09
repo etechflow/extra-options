@@ -324,7 +324,9 @@ class Save extends Action
 
             $opt->setData('template_id', $templateId);
             $opt->setData('parent_value_id', $valueId);
-            $opt->setData('sort_order', $sort++);
+            // Render sub-fields AFTER the top-level options (which sort 0,1,2…) so a
+            // conditional field appears below its parent dropdown, never above it.
+            $opt->setData('sort_order', 1000 + $sort++);
             $opt->setData('title', $title);
             $opt->setData('type', $type);
             $opt->setData('is_required', (int)($row['is_required'] ?? 0));
