@@ -167,6 +167,22 @@ class SyncService
 
             $magentoOptionId = (int)$productOption->getId();
 
+            // Guarantee the persisted type + required flag exactly match the
+            // template. Magento's option model can short-circuit a *type change*
+            // on an already-existing option (e.g. radio → checkbox), leaving the
+            // old type in catalog_product_option — which makes the storefront keep
+            // rendering radio buttons no matter what the admin picked. This direct,
+            // idempotent UPDATE is a no-op when the model already saved the right
+            // value, and a hard correction when it didn't.
+            $conn->update(
+                $this->resourceConnection->getTableName('catalog_product_option'),
+                [
+                    'type'       => (string)$tOpt->getData('type'),
+                    'is_require' => (int)$tOpt->getData('is_required'),
+                ],
+                ['option_id = ?' => $magentoOptionId]
+            );
+
             // Upsert link row.
             if (isset($linksByTemplateOption[$tOptId])) {
                 $conn->update(
