@@ -294,7 +294,10 @@ class Save extends Action
             if ($title === '') { continue; }
 
             $type = (string)($row['type'] ?? 'field');
-            if (!in_array($type, ['field', 'area', 'file'], true)) { $type = 'field'; }
+            if (!in_array($type, ['field', 'area', 'file', 'drop_down', 'radio', 'checkbox', 'multiple'], true)) {
+                $type = 'field';
+            }
+            $isSelectable = in_array($type, ['drop_down', 'radio', 'checkbox', 'multiple'], true);
 
             $optionId = isset($row['option_id']) ? (int)$row['option_id'] : 0;
             $opt = $optionId && isset($existingById[$optionId])
@@ -311,11 +314,62 @@ class Save extends Action
             $opt->setData('price_type', 'fixed');
             $this->optionResource->save($opt);
             $seen[(int)$opt->getId()] = true;
+
+            // A selectable sub-field (e.g. its own drop-down) carries choices;
+            // persist them, and clear any leftover choices when it isn't selectable.
+            $this->saveSubFieldValues(
+                (int)$opt->getId(),
+                $isSelectable ? ($row['sub_values'] ?? []) : []
+            );
         }
 
         foreach ($existingById as $id => $opt) {
             if (!isset($seen[$id])) {
                 $this->optionResource->delete($opt);
+            }
+        }
+    }
+
+    /**
+     * Persist the choices of a selectable sub-field (efopt_template_option_value
+     * rows keyed to the sub-field's own option_id). Mirrors syncValueRows but
+     * never recurses into further sub-fields — sub-field choices are leaves.
+     *
+     * @param array<int,mixed> $valuesPayload
+     */
+    private function saveSubFieldValues(int $subOptionId, array $valuesPayload): void
+    {
+        $existing = $this->valueCollectionFactory->create()
+            ->addFieldToFilter('template_option_id', $subOptionId);
+        $existingById = [];
+        foreach ($existing as $val) {
+            $existingById[(int)$val->getId()] = $val;
+        }
+
+        $seen = [];
+        $sort = 0;
+        foreach ($valuesPayload as $row) {
+            if (!is_array($row)) { continue; }
+            $title = trim((string)($row['title'] ?? ''));
+            if ($title === '') { continue; }
+
+            $valueId = isset($row['value_id']) ? (int)$row['value_id'] : 0;
+            $value = $valueId && isset($existingById[$valueId])
+                ? $existingById[$valueId]
+                : $this->valueFactory->create();
+
+            $value->setData('template_option_id', $subOptionId);
+            $value->setData('sort_order', $sort++);
+            $value->setData('title', $title);
+            $value->setData('price', (float)($row['price'] ?? 0));
+            $value->setData('price_type', 'fixed');
+            $this->valueResource->save($value);
+            $seen[(int)$value->getId()] = true;
+        }
+
+        foreach ($existingById as $id => $val) {
+            if (!isset($seen[$id])) {
+                $this->valueResource->delete($val);
             }
         }
     }
