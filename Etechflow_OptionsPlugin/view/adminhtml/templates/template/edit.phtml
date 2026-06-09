@@ -215,9 +215,6 @@ $categories    = $block->getCategoryOptions();
                                                                     </select>
                                                                 </label>
                                                                 <label class="efopt-sf-lbl efopt-sf-check"><input type="checkbox" name="<?= $subBase ?>[is_required]" value="1" <?= ($sub['is_required']??0) ? 'checked' : '' ?>> <?= $escaper->escapeHtml(__('Required')) ?></label>
-                                                                <label class="efopt-sf-lbl"><?= $escaper->escapeHtml(__('Price')) ?>
-                                                                    <input type="number" step="0.01" placeholder="0.00" name="<?= $subBase ?>[price]" value="<?= $sub['price'] !== null ? $escaper->escapeHtmlAttr((string)$sub['price']) : '' ?>">
-                                                                </label>
                                                                 <button type="button" class="efopt-del-btn" onclick="this.closest('.efopt-subfield-row').remove()">×</button>
                                                             </div>
                                                             <div class="efopt-subvalues" <?= $subSelectable ? '' : 'style="display:none"' ?>>
@@ -600,7 +597,6 @@ $categories    = $block->getCategoryOptions();
                 +       '<option value="field">Text</option><option value="number">Number</option><option value="area">Text Area</option><option value="file">File Upload</option><option value="image">Image Upload</option><option value="date">Date</option><option value="time">Time</option>'
                 +     '</select></label>'
                 +   '<label class="efopt-sf-lbl efopt-sf-check"><input type="checkbox" name="' + base + '[is_required]" value="1"> Required</label>'
-                +   '<label class="efopt-sf-lbl">Price<input type="number" step="0.01" placeholder="0.00" name="' + base + '[price]"></label>'
                 +   '<button type="button" class="efopt-del-btn" onclick="this.closest(\'.efopt-subfield-row\').remove()">×</button>'
                 + '</div>'
                 + '<div class="efopt-subvalues" style="display:none">'
