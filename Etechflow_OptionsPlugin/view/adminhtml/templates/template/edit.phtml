@@ -227,7 +227,6 @@ $categories    = $block->getCategoryOptions();
                                                                         <div class="efopt-subvalue-row">
                                                                             <input type="hidden" name="<?= $subBase ?>[sub_values][<?= $svIdx ?>][value_id]" value="<?= (int)$sv['value_id'] ?>">
                                                                             <input type="text" placeholder="<?= $escaper->escapeHtmlAttr(__('Choice label')) ?>" name="<?= $subBase ?>[sub_values][<?= $svIdx ?>][title]" value="<?= $escaper->escapeHtmlAttr((string)$sv['title']) ?>">
-                                                                            <input type="number" step="0.01" class="efopt-sv-price" placeholder="<?= $escaper->escapeHtmlAttr(__('Price')) ?>" name="<?= $subBase ?>[sub_values][<?= $svIdx ?>][price]" value="<?= $escaper->escapeHtmlAttr((string)$sv['price']) ?>">
                                                                             <button type="button" class="efopt-del-btn" onclick="this.closest('.efopt-subvalue-row').remove()">×</button>
                                                                         </div>
                                                                     <?php $svIdx++; endforeach ?>
@@ -637,7 +636,6 @@ $categories    = $block->getCategoryOptions();
             var html = '<div class="efopt-subvalue-row">'
                 + '<input type="hidden" name="' + base + '[sub_values][' + j + '][value_id]" value="">'
                 + '<input type="text" placeholder="Choice label" name="' + base + '[sub_values][' + j + '][title]">'
-                + '<input type="number" step="0.01" class="efopt-sv-price" placeholder="Price" name="' + base + '[sub_values][' + j + '][price]">'
                 + '<button type="button" class="efopt-del-btn" onclick="this.closest(\'.efopt-subvalue-row\').remove()">×</button>'
                 + '</div>';
             list.insertAdjacentHTML('beforeend', html);
