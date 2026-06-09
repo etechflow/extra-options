@@ -21,18 +21,47 @@ $categories    = $block->getCategoryOptions();
 .efopt-field-row label{flex:0 0 180px;color:#41362f;font-size:13px}
 .efopt-field-row input[type=text],.efopt-field-row textarea,.efopt-field-row select{flex:1;padding:6px 10px;border:1px solid #ccc;border-radius:3px;background:#fff}
 .efopt-field-row textarea{min-height:60px}
-/* ID selectors + !important so the Magento admin theme's generic `table` rules
-   can't override our column sizing (it was resetting table-layout, collapsing the
-   Values column and pushing its content off the right edge). */
-#efopt-options-table{width:100%!important;max-width:100%!important;border-collapse:collapse;table-layout:fixed!important}
-#efopt-options-table th,#efopt-options-table td{padding:6px 8px;border-bottom:1px solid #eee;vertical-align:top;text-align:left;overflow:hidden}
-#efopt-options-table th{background:#f5f5f5;font-weight:600;font-size:12px;text-transform:uppercase;color:#666}
-#efopt-options-table input[type=text],#efopt-options-table input[type=number],#efopt-options-table select{padding:4px 6px;border:1px solid #ccc;border-radius:3px;width:100%;box-sizing:border-box}
-#efopt-options-table .col-narrow{width:80px}
-#efopt-options-table .col-actions{width:70px;text-align:center}
-#efopt-options-table .col-title{min-width:200px}
-.efopt-values-table{margin-top:4px;width:100%!important;border-collapse:collapse;background:#fafafa;table-layout:fixed!important}
-.efopt-values-table th,.efopt-values-table td{padding:3px 6px;border-bottom:1px dashed #ddd;font-size:12px;overflow:hidden}
+/* Options builder — pure flexbox (no tables) so the Magento admin theme's
+   generic table rules can never collapse or overflow the columns. */
+.efopt-opts{width:100%}
+.efopt-opt{border:1px solid #e0e0e0;border-radius:6px;background:#fcfcfc;padding:12px 14px;margin-bottom:12px}
+.efopt-opt-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.efopt-fld{display:flex;flex-direction:column;gap:4px}
+.efopt-fld-title{flex:1 1 240px;min-width:180px}
+.efopt-fld-type{flex:0 0 210px}
+.efopt-fld-req{flex:0 0 64px}
+.efopt-fld-act{flex:0 0 auto;margin-left:auto}
+.efopt-cap{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#999;font-weight:700}
+.efopt-fld input[type=text],.efopt-fld select{padding:6px 8px;border:1px solid #ccc;border-radius:3px;width:100%;box-sizing:border-box;background:#fff}
+.efopt-fld-req input[type=checkbox]{margin-top:6px}
+.efopt-opt-body{margin-top:12px}
+.efopt-na{color:#999;font-size:12px}
+.efopt-values{border-top:1px dashed #e0e0e0;padding-top:10px}
+.efopt-vhead{display:flex;gap:8px;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#aaa;font-weight:700;padding:0 2px 6px}
+.efopt-vitem{margin-bottom:4px}
+.efopt-vrow{display:flex;gap:8px;align-items:center;padding:3px 2px}
+.efopt-vrow .c-def,.efopt-vhead .c-def{flex:0 0 54px;text-align:center}
+.efopt-vrow .c-lbl,.efopt-vhead .c-lbl{flex:1 1 auto;min-width:0;display:flex;gap:6px}
+.efopt-vrow .c-prc,.efopt-vhead .c-prc{flex:0 0 110px}
+.efopt-vrow .c-act,.efopt-vhead .c-act{flex:0 0 28px;text-align:center}
+.efopt-vrow .c-lbl input[type=text],.efopt-vrow .c-prc input{padding:5px 8px;border:1px solid #ccc;border-radius:3px;box-sizing:border-box;width:100%}
+.efopt-subfields{margin:0 0 10px 54px;padding:8px 10px;background:#f6f9ff;border-left:3px solid #0535F5;border-radius:0 5px 5px 0}
+.efopt-sub-hint{font-size:11px;font-weight:600;color:#0535F5;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.efopt-subfield-row{border:1px solid #dce7fb;border-radius:5px;background:#fff;padding:8px 10px;margin-bottom:8px}
+.efopt-sf-grid{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.efopt-sf-lbl{font-size:11px;color:#41362f;display:flex;flex-direction:column;gap:3px;font-weight:500}
+.efopt-sf-lbl.efopt-sf-grow{flex:1;min-width:150px}
+.efopt-sf-lbl.efopt-sf-check{flex-direction:row;align-items:center;gap:5px;font-weight:400;white-space:nowrap}
+.efopt-sf-grid > label input[type=text]{width:100%}
+.efopt-sf-grid input[type=text],.efopt-sf-grid select,.efopt-sf-grid input[type=number]{padding:5px 7px;border:1px solid #ccc;border-radius:3px;box-sizing:border-box;background:#fff}
+.efopt-sf-grid select{width:130px}
+.efopt-sf-grid input[type=number]{width:80px}
+.efopt-subvalues{margin-top:8px;padding-left:12px;border-left:2px dashed #bcd0f5}
+.efopt-sv-cap{font-size:10.5px;color:#0535F5;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.efopt-subvalue-row{display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.efopt-subvalue-row input[type=text]{flex:1;padding:4px 6px;border:1px solid #ccc;border-radius:3px;box-sizing:border-box}
+.efopt-subvalue-row .efopt-sv-price{width:80px;padding:4px 6px;border:1px solid #ccc;border-radius:3px;box-sizing:border-box}
+.efopt-btn-sm{font-size:11px;padding:4px 10px}
 .efopt-add-btn{background:#0072c6;color:#fff;border:none;padding:6px 12px;border-radius:3px;cursor:pointer;font-size:12px}
 .efopt-add-btn:hover{background:#005a9e}
 .efopt-del-btn{background:#c00;color:#fff;border:none;padding:3px 7px;border-radius:3px;cursor:pointer;font-size:11px}
@@ -101,32 +130,20 @@ $categories    = $block->getCategoryOptions();
             <span class="efopt-sub"><?= $escaper->escapeHtml(__('(%1 option(s))', count($opts))) ?></span>
         </h3>
 
-        <table class="efopt-options-table" id="efopt-options-table">
-            <colgroup>
-                <col style="width:20%"><!-- Title -->
-                <col style="width:14%"><!-- Type -->
-                <col style="width:7%"><!-- Required -->
-                <col style="width:50%"><!-- Values / sub-fields -->
-                <col style="width:9%"><!-- Action -->
-            </colgroup>
-            <thead>
-                <tr>
-                    <th><?= $escaper->escapeHtml(__('Title')) ?> *</th>
-                    <th><?= $escaper->escapeHtml(__('Type')) ?></th>
-                    <th><?= $escaper->escapeHtml(__('Required')) ?></th>
-                    <th><?= $escaper->escapeHtml(__('Values / sub-fields')) ?></th>
-                    <th><?= $escaper->escapeHtml(__('Action')) ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php $optIndex = 0; foreach ($opts as $o): ?>
-                    <tr class="efopt-option-row">
-                        <td>
+        <div class="efopt-opts" id="efopt-opts">
+            <?php $optIndex = 0; foreach ($opts as $o):
+                $selectable = in_array($o['type'] ?? '', ['drop_down','radio','checkbox','multiple'], true);
+                $cbMode = (string)($o['checkbox_mode'] ?? 'multi');
+            ?>
+                <div class="efopt-opt">
+                    <div class="efopt-opt-head">
+                        <div class="efopt-fld efopt-fld-title">
+                            <span class="efopt-cap"><?= $escaper->escapeHtml(__('Title')) ?> *</span>
                             <input type="hidden" name="data[options][<?= $optIndex ?>][option_id]" value="<?= (int)$o['option_id'] ?>">
-                            <input type="text" name="data[options][<?= $optIndex ?>][title]" required
-                                   value="<?= $escaper->escapeHtmlAttr((string)$o['title']) ?>">
-                        </td>
-                        <td>
+                            <input type="text" required name="data[options][<?= $optIndex ?>][title]" value="<?= $escaper->escapeHtmlAttr((string)$o['title']) ?>">
+                        </div>
+                        <div class="efopt-fld efopt-fld-type">
+                            <span class="efopt-cap"><?= $escaper->escapeHtml(__('Type')) ?></span>
                             <select name="data[options][<?= $optIndex ?>][type]" class="efopt-type-sel" onchange="window.efoptTypeChanged(this)">
                                 <?php foreach ([
                                     'drop_down' => 'Drop-down (single select)',
@@ -140,114 +157,103 @@ $categories    = $block->getCategoryOptions();
                                     <option value="<?= $val ?>" <?= ($o['type'] ?? '')===$val?'selected':'' ?>><?= $escaper->escapeHtml($lbl) ?></option>
                                 <?php endforeach ?>
                             </select>
-                            <?php $cbMode = (string)($o['checkbox_mode'] ?? 'multi'); ?>
                             <select name="data[options][<?= $optIndex ?>][checkbox_mode]" class="efopt-cb-mode"
-                                    style="margin-top:5px;font-size:11px<?= ($o['type'] ?? '')==='checkbox' ? '' : ';display:none' ?>"
+                                    style="margin-top:5px;font-size:11px;<?= ($o['type'] ?? '')==='checkbox' ? '' : 'display:none' ?>"
                                     title="<?= $escaper->escapeHtmlAttr(__('How many boxes a customer may tick')) ?>">
                                 <option value="multi"  <?= $cbMode==='multi'  ? 'selected' : '' ?>>↳ Customer can tick MULTIPLE</option>
                                 <option value="single" <?= $cbMode==='single' ? 'selected' : '' ?>>↳ Customer can tick ONLY ONE</option>
                             </select>
-                        </td>
-                        <td><input type="checkbox" name="data[options][<?= $optIndex ?>][is_required]" value="1" <?= ($o['is_required']??0) ? 'checked' : '' ?>></td>
-                        <td>
-                            <?php if (in_array($o['type'] ?? '', ['drop_down','radio','checkbox','multiple'], true)): ?>
-                                <table class="efopt-values-table">
-                                    <thead><tr>
-                                        <th style="width:50px;text-align:center" title="<?= $escaper->escapeHtmlAttr(__('Mark one value as the default selection on the storefront')) ?>"><?= $escaper->escapeHtml(__('Default')) ?></th>
-                                        <th><?= $escaper->escapeHtml(__('Label')) ?></th>
-                                        <th style="width:90px"><?= $escaper->escapeHtml(__('Price')) ?></th>
-                                        <th style="width:60px"></th>
-                                    </tr></thead>
-                                    <tbody class="efopt-values-tbody">
-                                        <?php $vIdx=0; foreach ($o['values'] as $v): $isDefault = ((int)($o['default_value_id'] ?? 0) === (int)$v['value_id']); ?>
-                                            <tr>
-                                                <td style="text-align:center">
-                                                    <input type="radio"
-                                                           name="data[options][<?= $optIndex ?>][default_value_idx]"
-                                                           value="<?= $vIdx ?>"
-                                                           <?= $isDefault ? 'checked' : '' ?>
-                                                           title="<?= $escaper->escapeHtmlAttr(__('Default selection')) ?>">
-                                                </td>
-                                                <td>
+                        </div>
+                        <div class="efopt-fld efopt-fld-req">
+                            <span class="efopt-cap"><?= $escaper->escapeHtml(__('Required')) ?></span>
+                            <input type="checkbox" name="data[options][<?= $optIndex ?>][is_required]" value="1" <?= ($o['is_required']??0) ? 'checked' : '' ?>>
+                        </div>
+                        <div class="efopt-fld efopt-fld-act">
+                            <button type="button" class="efopt-del-btn" onclick="this.closest('.efopt-opt').remove()">× <?= $escaper->escapeHtml(__('Remove')) ?></button>
+                        </div>
+                    </div>
+                    <div class="efopt-opt-body">
+                        <?php if ($selectable): ?>
+                            <div class="efopt-values" data-opt="<?= $optIndex ?>">
+                                <div class="efopt-vhead">
+                                    <span class="c-def" title="<?= $escaper->escapeHtmlAttr(__('Default-selected on the storefront')) ?>"><?= $escaper->escapeHtml(__('Default')) ?></span>
+                                    <span class="c-lbl"><?= $escaper->escapeHtml(__('Label')) ?></span>
+                                    <span class="c-prc"><?= $escaper->escapeHtml(__('Price')) ?></span>
+                                    <span class="c-act"></span>
+                                </div>
+                                <div class="efopt-vlist">
+                                    <?php $vIdx=0; foreach ($o['values'] as $v): $isDefault = ((int)($o['default_value_id'] ?? 0) === (int)$v['value_id']); ?>
+                                        <div class="efopt-vitem">
+                                            <div class="efopt-vrow">
+                                                <span class="c-def"><input type="radio" name="data[options][<?= $optIndex ?>][default_value_idx]" value="<?= $vIdx ?>" <?= $isDefault ? 'checked' : '' ?> title="<?= $escaper->escapeHtmlAttr(__('Default selection')) ?>"></span>
+                                                <span class="c-lbl">
                                                     <input type="hidden" name="data[options][<?= $optIndex ?>][values][<?= $vIdx ?>][value_id]" value="<?= (int)$v['value_id'] ?>">
-                                                    <input type="text" name="data[options][<?= $optIndex ?>][values][<?= $vIdx ?>][title]" value="<?= $escaper->escapeHtmlAttr((string)$v['title']) ?>">
-                                                </td>
-                                                <td><input type="number" step="0.01" name="data[options][<?= $optIndex ?>][values][<?= $vIdx ?>][price]" value="<?= $escaper->escapeHtmlAttr((string)$v['price']) ?>"></td>
-                                                <td><button type="button" class="efopt-del-btn" onclick="window.efoptRemoveValue(this)">×</button></td>
-                                            </tr>
-                                            <tr class="efopt-sub-row">
-                                                <td></td>
-                                                <td colspan="3" style="padding:6px 10px 8px 18px;background:#f6f9ff;border-left:3px solid #0535F5">
-                                                    <div class="efopt-subfields" data-opt="<?= $optIndex ?>" data-val="<?= $vIdx ?>" data-next-sf="<?= count($v['sub_options'] ?? []) ?>">
-                                                        <div style="font-size:11px;font-weight:600;color:#0535F5;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">
-                                                            ↳ <?= $escaper->escapeHtml(__('Sub-fields — shown on the storefront only when this value is selected')) ?>
-                                                        </div>
-                                                        <div class="efopt-subfields-list">
-                                                            <?php $sfIdx=0; foreach (($v['sub_options'] ?? []) as $sub):
-                                                                $subBase = 'data[options][' . $optIndex . '][values][' . $vIdx . '][sub_fields][' . $sfIdx . ']';
-                                                                $subType = (string)($sub['type'] ?? 'field');
-                                                                $subSelectable = in_array($subType, ['drop_down','radio','checkbox','multiple'], true);
-                                                            ?>
-                                                                <div class="efopt-subfield-row" style="border:1px solid #dce7fb;border-radius:5px;background:#fff;padding:8px 10px;margin-bottom:8px">
-                                                                    <input type="hidden" name="<?= $subBase ?>[option_id]" value="<?= (int)$sub['option_id'] ?>">
-                                                                    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-                                                                        <label class="efopt-sf-lbl" style="flex:1;min-width:150px"><?= $escaper->escapeHtml(__('Title')) ?>
-                                                                            <input type="text" style="width:100%" placeholder="<?= $escaper->escapeHtmlAttr(__('e.g. Enter code')) ?>" name="<?= $subBase ?>[title]" value="<?= $escaper->escapeHtmlAttr((string)$sub['title']) ?>">
-                                                                        </label>
-                                                                        <label class="efopt-sf-lbl"><?= $escaper->escapeHtml(__('Type')) ?>
-                                                                            <select class="efopt-subtype" onchange="window.efoptSubTypeChanged(this)" name="<?= $subBase ?>[type]" style="width:130px;display:block">
-                                                                                <?php foreach (['field'=>'Text','area'=>'Text Area','file'=>'File Upload','drop_down'=>'Drop-down','radio'=>'Radio','checkbox'=>'Checkbox'] as $tval=>$tlbl): ?>
-                                                                                    <option value="<?= $tval ?>" <?= $subType===$tval?'selected':'' ?>><?= $escaper->escapeHtml($tlbl) ?></option>
-                                                                                <?php endforeach ?>
-                                                                            </select>
-                                                                        </label>
-                                                                        <label class="efopt-sf-lbl efopt-sf-check" style="white-space:nowrap"><input type="checkbox" name="<?= $subBase ?>[is_required]" value="1" <?= ($sub['is_required']??0) ? 'checked' : '' ?>> <?= $escaper->escapeHtml(__('Required')) ?></label>
-                                                                        <label class="efopt-sf-lbl"><?= $escaper->escapeHtml(__('Price')) ?>
-                                                                            <input type="number" step="0.01" style="width:80px;display:block" placeholder="0.00" name="<?= $subBase ?>[price]" value="<?= $sub['price'] !== null ? $escaper->escapeHtmlAttr((string)$sub['price']) : '' ?>">
-                                                                        </label>
-                                                                        <button type="button" class="efopt-del-btn" style="margin-bottom:2px" onclick="this.closest('.efopt-subfield-row').remove()">×</button>
-                                                                    </div>
-                                                                    <div class="efopt-subvalues" style="margin-top:8px;padding-left:12px;border-left:2px dashed #bcd0f5;<?= $subSelectable ? '' : 'display:none' ?>">
-                                                                        <div style="font-size:10.5px;color:#0535F5;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em"><?= $escaper->escapeHtml(__('Choices')) ?></div>
-                                                                        <div class="efopt-subvalues-list" data-next-sv="<?= count($sub['values'] ?? []) ?>">
-                                                                            <?php $svIdx=0; foreach (($sub['values'] ?? []) as $sv): ?>
-                                                                                <div class="efopt-subvalue-row" style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
-                                                                                    <input type="hidden" name="<?= $subBase ?>[sub_values][<?= $svIdx ?>][value_id]" value="<?= (int)$sv['value_id'] ?>">
-                                                                                    <input type="text" style="flex:1" placeholder="<?= $escaper->escapeHtmlAttr(__('Choice label')) ?>" name="<?= $subBase ?>[sub_values][<?= $svIdx ?>][title]" value="<?= $escaper->escapeHtmlAttr((string)$sv['title']) ?>">
-                                                                                    <input type="number" step="0.01" style="width:80px" placeholder="<?= $escaper->escapeHtmlAttr(__('Price')) ?>" name="<?= $subBase ?>[sub_values][<?= $svIdx ?>][price]" value="<?= $escaper->escapeHtmlAttr((string)$sv['price']) ?>">
-                                                                                    <button type="button" class="efopt-del-btn" onclick="this.closest('.efopt-subvalue-row').remove()">×</button>
-                                                                                </div>
-                                                                            <?php $svIdx++; endforeach ?>
+                                                    <input type="text" placeholder="<?= $escaper->escapeHtmlAttr(__('Choice label')) ?>" name="data[options][<?= $optIndex ?>][values][<?= $vIdx ?>][title]" value="<?= $escaper->escapeHtmlAttr((string)$v['title']) ?>">
+                                                </span>
+                                                <span class="c-prc"><input type="number" step="0.01" name="data[options][<?= $optIndex ?>][values][<?= $vIdx ?>][price]" value="<?= $escaper->escapeHtmlAttr((string)$v['price']) ?>"></span>
+                                                <span class="c-act"><button type="button" class="efopt-del-btn" onclick="window.efoptRemoveValue(this)">×</button></span>
+                                            </div>
+                                            <div class="efopt-subfields" data-opt="<?= $optIndex ?>" data-val="<?= $vIdx ?>" data-next-sf="<?= count($v['sub_options'] ?? []) ?>">
+                                                <div class="efopt-sub-hint">↳ <?= $escaper->escapeHtml(__('Sub-fields — shown on the storefront only when this value is selected')) ?></div>
+                                                <div class="efopt-subfields-list">
+                                                    <?php $sfIdx=0; foreach (($v['sub_options'] ?? []) as $sub):
+                                                        $subBase = 'data[options][' . $optIndex . '][values][' . $vIdx . '][sub_fields][' . $sfIdx . ']';
+                                                        $subType = (string)($sub['type'] ?? 'field');
+                                                        $subSelectable = in_array($subType, ['drop_down','radio','checkbox','multiple'], true);
+                                                    ?>
+                                                        <div class="efopt-subfield-row">
+                                                            <input type="hidden" name="<?= $subBase ?>[option_id]" value="<?= (int)$sub['option_id'] ?>">
+                                                            <div class="efopt-sf-grid">
+                                                                <label class="efopt-sf-lbl efopt-sf-grow"><?= $escaper->escapeHtml(__('Title')) ?>
+                                                                    <input type="text" placeholder="<?= $escaper->escapeHtmlAttr(__('e.g. Enter code')) ?>" name="<?= $subBase ?>[title]" value="<?= $escaper->escapeHtmlAttr((string)$sub['title']) ?>">
+                                                                </label>
+                                                                <label class="efopt-sf-lbl"><?= $escaper->escapeHtml(__('Type')) ?>
+                                                                    <select class="efopt-subtype" onchange="window.efoptSubTypeChanged(this)" name="<?= $subBase ?>[type]">
+                                                                        <?php foreach (['field'=>'Text','area'=>'Text Area','file'=>'File Upload','drop_down'=>'Drop-down','radio'=>'Radio','checkbox'=>'Checkbox'] as $tval=>$tlbl): ?>
+                                                                            <option value="<?= $tval ?>" <?= $subType===$tval?'selected':'' ?>><?= $escaper->escapeHtml($tlbl) ?></option>
+                                                                        <?php endforeach ?>
+                                                                    </select>
+                                                                </label>
+                                                                <label class="efopt-sf-lbl efopt-sf-check"><input type="checkbox" name="<?= $subBase ?>[is_required]" value="1" <?= ($sub['is_required']??0) ? 'checked' : '' ?>> <?= $escaper->escapeHtml(__('Required')) ?></label>
+                                                                <label class="efopt-sf-lbl"><?= $escaper->escapeHtml(__('Price')) ?>
+                                                                    <input type="number" step="0.01" placeholder="0.00" name="<?= $subBase ?>[price]" value="<?= $sub['price'] !== null ? $escaper->escapeHtmlAttr((string)$sub['price']) : '' ?>">
+                                                                </label>
+                                                                <button type="button" class="efopt-del-btn" onclick="this.closest('.efopt-subfield-row').remove()">×</button>
+                                                            </div>
+                                                            <div class="efopt-subvalues" <?= $subSelectable ? '' : 'style="display:none"' ?>>
+                                                                <div class="efopt-sv-cap"><?= $escaper->escapeHtml(__('Choices')) ?></div>
+                                                                <div class="efopt-subvalues-list" data-next-sv="<?= count($sub['values'] ?? []) ?>">
+                                                                    <?php $svIdx=0; foreach (($sub['values'] ?? []) as $sv): ?>
+                                                                        <div class="efopt-subvalue-row">
+                                                                            <input type="hidden" name="<?= $subBase ?>[sub_values][<?= $svIdx ?>][value_id]" value="<?= (int)$sv['value_id'] ?>">
+                                                                            <input type="text" placeholder="<?= $escaper->escapeHtmlAttr(__('Choice label')) ?>" name="<?= $subBase ?>[sub_values][<?= $svIdx ?>][title]" value="<?= $escaper->escapeHtmlAttr((string)$sv['title']) ?>">
+                                                                            <input type="number" step="0.01" class="efopt-sv-price" placeholder="<?= $escaper->escapeHtmlAttr(__('Price')) ?>" name="<?= $subBase ?>[sub_values][<?= $svIdx ?>][price]" value="<?= $escaper->escapeHtmlAttr((string)$sv['price']) ?>">
+                                                                            <button type="button" class="efopt-del-btn" onclick="this.closest('.efopt-subvalue-row').remove()">×</button>
                                                                         </div>
-                                                                        <button type="button" class="efopt-add-btn" style="font-size:10.5px;padding:3px 8px" onclick="window.efoptAddSubValue(this)">+ <?= $escaper->escapeHtml(__('Add sub value')) ?></button>
-                                                                    </div>
+                                                                    <?php $svIdx++; endforeach ?>
                                                                 </div>
-                                                            <?php $sfIdx++; endforeach ?>
+                                                                <button type="button" class="efopt-add-btn efopt-btn-sm" onclick="window.efoptAddSubValue(this)">+ <?= $escaper->escapeHtml(__('Add sub value')) ?></button>
+                                                            </div>
                                                         </div>
-                                                        <button type="button" class="efopt-add-btn" style="font-size:11px;padding:4px 10px" onclick="window.efoptAddSubField(this, <?= $optIndex ?>, <?= $vIdx ?>)">+ <?= $escaper->escapeHtml(__('Add sub-field')) ?></button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        <?php $vIdx++; endforeach ?>
-                                    </tbody>
-                                    <tfoot><tr><td colspan="4" style="text-align:right;padding-top:4px">
-                                        <button type="button" class="efopt-add-btn" onclick="window.efoptAddValueRow(this, <?= $optIndex ?>)">+ <?= $escaper->escapeHtml(__('Add Value')) ?></button>
-                                    </td></tr></tfoot>
-                                </table>
-                            <?php else: ?>
-                                <span style="color:#999;font-size:12px"><?= $escaper->escapeHtml(__('— not applicable for this type —')) ?></span>
-                            <?php endif ?>
-                        </td>
-                        <td><button type="button" class="efopt-del-btn" onclick="this.closest('tr.efopt-option-row').remove()">× <?= $escaper->escapeHtml(__('Remove')) ?></button></td>
-                    </tr>
-                <?php $optIndex++; endforeach ?>
-            </tbody>
-            <tfoot>
-                <tr><td colspan="5" style="padding-top:10px">
-                    <button type="button" class="efopt-add-btn" onclick="window.efoptAddOptionRow()">+ <?= $escaper->escapeHtml(__('Add Option')) ?></button>
-                </td></tr>
-            </tfoot>
-        </table>
+                                                    <?php $sfIdx++; endforeach ?>
+                                                </div>
+                                                <button type="button" class="efopt-add-btn efopt-btn-sm" onclick="window.efoptAddSubField(this, <?= $optIndex ?>, <?= $vIdx ?>)">+ <?= $escaper->escapeHtml(__('Add sub-field')) ?></button>
+                                            </div>
+                                        </div>
+                                    <?php $vIdx++; endforeach ?>
+                                </div>
+                                <button type="button" class="efopt-add-btn" onclick="window.efoptAddValueRow(this, <?= $optIndex ?>)">+ <?= $escaper->escapeHtml(__('Add Value')) ?></button>
+                            </div>
+                        <?php else: ?>
+                            <span class="efopt-na">— <?= $escaper->escapeHtml(__('not applicable for this type')) ?> —</span>
+                        <?php endif ?>
+                    </div>
+                </div>
+            <?php $optIndex++; endforeach ?>
+        </div>
+        <div style="margin-top:8px">
+            <button type="button" class="efopt-add-btn" onclick="window.efoptAddOptionRow()">+ <?= $escaper->escapeHtml(__('Add Option')) ?></button>
+        </div>
     </div>
 
     <!-- ── Apply To (warning-module-style 4-level cascading multi-select) ── -->
@@ -484,72 +490,64 @@ $categories    = $block->getCategoryOptions();
     (function () {
         var nextOptIdx = <?= (int) count($opts) ?>;
 
-        // Build the values-table HTML for a selectable option type. Used both
-        // when adding a new row and when the type is changed on an existing row.
-        function efoptValuesHtml(optIdx) {
-            return '<table class="efopt-values-table">'
-                + '<thead><tr>'
-                + '<th style="width:50px;text-align:center" title="Default selection on storefront">Default</th>'
-                + '<th>Label</th><th style="width:90px">Price</th><th style="width:60px"></th>'
-                + '</tr></thead>'
-                + '<tbody class="efopt-values-tbody"></tbody>'
-                + '<tfoot><tr><td colspan="4" style="text-align:right;padding-top:4px">'
-                + '<button type="button" class="efopt-add-btn" onclick="window.efoptAddValueRow(this,' + optIdx + ')">+ Add Value</button>'
-                + '</td></tr></tfoot>'
-                + '</table>';
-        }
         var SELECTABLE_TYPES = ['drop_down','radio','checkbox','multiple'];
 
-        // Called when a type dropdown changes on any row (new or existing).
+        // Build the values block (flex divs) for a selectable option type.
+        function efoptValuesHtml(optIdx) {
+            return '<div class="efopt-values" data-opt="' + optIdx + '">'
+                + '<div class="efopt-vhead"><span class="c-def">Default</span><span class="c-lbl">Label</span><span class="c-prc">Price</span><span class="c-act"></span></div>'
+                + '<div class="efopt-vlist"></div>'
+                + '<button type="button" class="efopt-add-btn" onclick="window.efoptAddValueRow(this,' + optIdx + ')">+ Add Value</button>'
+                + '</div>';
+        }
+
+        // Called when a type dropdown changes on any option (new or existing).
         window.efoptTypeChanged = function (sel) {
-            var row  = sel.closest('tr.efopt-option-row');
-            if (!row) return;
-            var cell = row.querySelector('td:nth-child(5)');
+            var opt = sel.closest('.efopt-opt');
+            if (!opt) return;
+            var body = opt.querySelector('.efopt-opt-body');
             var optIdx = parseInt(sel.name.match(/\[(\d+)\]/)[1], 10);
             var type   = sel.value;
             // Show the "single vs multiple" selector ONLY for checkbox type.
-            var cbMode = row.querySelector('select.efopt-cb-mode');
+            var cbMode = opt.querySelector('select.efopt-cb-mode');
             if (cbMode) { cbMode.style.display = (type === 'checkbox') ? '' : 'none'; }
-            if (!cell) return;
+            if (!body) return;
             if (SELECTABLE_TYPES.indexOf(type) >= 0) {
-                // Show values table if not already present.
-                if (!cell.querySelector('table.efopt-values-table')) {
-                    cell.innerHTML = efoptValuesHtml(optIdx);
+                if (!body.querySelector('.efopt-values')) {
+                    body.innerHTML = efoptValuesHtml(optIdx);
                     nextValIdx[optIdx] = nextValIdx[optIdx] || 0;
                 }
             } else {
-                // Non-selectable type: hide values table.
-                if (!cell.querySelector('input[name*="[values]"]')) {
-                    cell.innerHTML = '<span style="color:#999;font-size:12px">— not applicable for this type —</span>';
+                if (!body.querySelector('input[name*="[values]"]')) {
+                    body.innerHTML = '<span class="efopt-na">— not applicable for this type —</span>';
                 }
             }
         };
 
         window.efoptAddOptionRow = function () {
-            var tbody = document.querySelector('#efopt-options-table tbody');
-            var html = '<tr class="efopt-option-row">'
-                + '<td><input type="hidden" name="data[options][' + nextOptIdx + '][option_id]" value="">'
-                +     '<input type="text" name="data[options][' + nextOptIdx + '][title]" required></td>'
-                + '<td><select name="data[options][' + nextOptIdx + '][type]" class="efopt-type-sel" onchange="window.efoptTypeChanged(this)">'
-                +     '<option value="drop_down">Drop-down (single select)</option>'
-                +     '<option value="radio">Radio (single select)</option>'
-                +     '<option value="checkbox">Checkbox</option>'
-                +     '<option value="multiple">Multi-select list</option>'
-                +     '<option value="field">Text Field</option>'
-                +     '<option value="area">Text Area</option>'
-                +     '<option value="file">File Upload</option>'
-                + '</select>'
-                +     '<select name="data[options][' + nextOptIdx + '][checkbox_mode]" class="efopt-cb-mode" style="margin-top:5px;font-size:11px;display:none">'
-                +         '<option value="multi">↳ Customer can tick MULTIPLE</option>'
-                +         '<option value="single">↳ Customer can tick ONLY ONE</option>'
-                +     '</select></td>'
-                + '<td><input type="checkbox" name="data[options][' + nextOptIdx + '][is_required]" value="1"></td>'
-                + '<td><input type="number" step="0.01" name="data[options][' + nextOptIdx + '][price]"></td>'
-                + '<td>' + efoptValuesHtml(nextOptIdx) + '</td>'
-                + '<td><button type="button" class="efopt-del-btn" onclick="this.closest(\'tr.efopt-option-row\').remove()">× Remove</button></td>'
-                + '</tr>';
-            tbody.insertAdjacentHTML('beforeend', html);
-            nextValIdx[nextOptIdx] = 0;
+            var container = document.getElementById('efopt-opts');
+            var n = nextOptIdx;
+            var b = 'data[options][' + n + ']';
+            var html = '<div class="efopt-opt">'
+                + '<div class="efopt-opt-head">'
+                +   '<div class="efopt-fld efopt-fld-title"><span class="efopt-cap">Title *</span>'
+                +     '<input type="hidden" name="' + b + '[option_id]" value="">'
+                +     '<input type="text" required name="' + b + '[title]"></div>'
+                +   '<div class="efopt-fld efopt-fld-type"><span class="efopt-cap">Type</span>'
+                +     '<select class="efopt-type-sel" onchange="window.efoptTypeChanged(this)" name="' + b + '[type]">'
+                +       '<option value="drop_down">Drop-down (single select)</option><option value="radio">Radio (single select)</option>'
+                +       '<option value="checkbox">Checkbox</option><option value="multiple">Multi-select list</option>'
+                +       '<option value="field">Text Field</option><option value="area">Text Area</option><option value="file">File Upload</option>'
+                +     '</select>'
+                +     '<select class="efopt-cb-mode" name="' + b + '[checkbox_mode]" style="margin-top:5px;font-size:11px;display:none"><option value="multi">↳ Customer can tick MULTIPLE</option><option value="single">↳ Customer can tick ONLY ONE</option></select>'
+                +   '</div>'
+                +   '<div class="efopt-fld efopt-fld-req"><span class="efopt-cap">Required</span><input type="checkbox" name="' + b + '[is_required]" value="1"></div>'
+                +   '<div class="efopt-fld efopt-fld-act"><button type="button" class="efopt-del-btn" onclick="this.closest(\'.efopt-opt\').remove()">× Remove</button></div>'
+                + '</div>'
+                + '<div class="efopt-opt-body">' + efoptValuesHtml(n) + '</div>'
+                + '</div>';
+            container.insertAdjacentHTML('beforeend', html);
+            nextValIdx[n] = 0;
             nextOptIdx++;
         };
 
@@ -559,33 +557,30 @@ $categories    = $block->getCategoryOptions();
         nextValIdx[<?= $i ?>] = <?= count($o['values'] ?? []) ?>;
         <?php endforeach ?>
         window.efoptAddValueRow = function (btn, optIdx) {
-            var tbody = btn.closest('table.efopt-values-table').querySelector('tbody');
+            var list = btn.closest('.efopt-values').querySelector('.efopt-vlist');
             var vIdx = nextValIdx[optIdx] || 0;
-            var valueRow = '<tr class="efopt-value-row">'
-                + '<td style="text-align:center"><input type="radio" name="data[options][' + optIdx + '][default_value_idx]" value="' + vIdx + '"></td>'
-                + '<td><input type="hidden" name="data[options][' + optIdx + '][values][' + vIdx + '][value_id]" value="">'
-                +     '<input type="text" name="data[options][' + optIdx + '][values][' + vIdx + '][title]"></td>'
-                + '<td><input type="number" step="0.01" name="data[options][' + optIdx + '][values][' + vIdx + '][price]" value="0"></td>'
-                + '<td><button type="button" class="efopt-del-btn" onclick="window.efoptRemoveValue(this)">×</button></td>'
-                + '</tr>';
-            var subRow = '<tr class="efopt-sub-row"><td></td>'
-                + '<td colspan="3" style="padding:6px 10px 8px 18px;background:#f6f9ff;border-left:3px solid #0535F5">'
-                +   '<div class="efopt-subfields" data-opt="' + optIdx + '" data-val="' + vIdx + '" data-next-sf="0">'
-                +     '<div style="font-size:11px;font-weight:600;color:#0535F5;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">&#8627; Sub-fields — shown on the storefront only when this value is selected</div>'
-                +     '<div class="efopt-subfields-list"></div>'
-                +     '<button type="button" class="efopt-add-btn" style="font-size:11px;padding:4px 10px" onclick="window.efoptAddSubField(this,' + optIdx + ',' + vIdx + ')">+ Add sub-field</button>'
-                +   '</div>'
-                + '</td></tr>';
-            tbody.insertAdjacentHTML('beforeend', valueRow + subRow);
+            var b = 'data[options][' + optIdx + '][values][' + vIdx + ']';
+            var html = '<div class="efopt-vitem">'
+                + '<div class="efopt-vrow">'
+                +   '<span class="c-def"><input type="radio" name="data[options][' + optIdx + '][default_value_idx]" value="' + vIdx + '"></span>'
+                +   '<span class="c-lbl"><input type="hidden" name="' + b + '[value_id]" value=""><input type="text" placeholder="Choice label" name="' + b + '[title]"></span>'
+                +   '<span class="c-prc"><input type="number" step="0.01" name="' + b + '[price]" value="0"></span>'
+                +   '<span class="c-act"><button type="button" class="efopt-del-btn" onclick="window.efoptRemoveValue(this)">×</button></span>'
+                + '</div>'
+                + '<div class="efopt-subfields" data-opt="' + optIdx + '" data-val="' + vIdx + '" data-next-sf="0">'
+                +   '<div class="efopt-sub-hint">&#8627; Sub-fields — shown on the storefront only when this value is selected</div>'
+                +   '<div class="efopt-subfields-list"></div>'
+                +   '<button type="button" class="efopt-add-btn efopt-btn-sm" onclick="window.efoptAddSubField(this,' + optIdx + ',' + vIdx + ')">+ Add sub-field</button>'
+                + '</div>'
+                + '</div>';
+            list.insertAdjacentHTML('beforeend', html);
             nextValIdx[optIdx] = vIdx + 1;
         };
 
-        // Remove a value AND the sub-fields row that follows it.
+        // Remove a whole value item (value row + its sub-fields).
         window.efoptRemoveValue = function (btn) {
-            var row = btn.closest('tr');
-            var next = row.nextElementSibling;
-            if (next && next.classList.contains('efopt-sub-row')) { next.remove(); }
-            row.remove();
+            var item = btn.closest('.efopt-vitem');
+            if (item) { item.remove(); }
         };
 
         // Append a sub-field editor (label + type + required + price) under a value.
@@ -596,24 +591,24 @@ $categories    = $block->getCategoryOptions();
             var list = wrap.querySelector('.efopt-subfields-list');
             var k = parseInt(wrap.dataset.nextSf || '0', 10);
             var base = 'data[options][' + optIdx + '][values][' + valIdx + '][sub_fields][' + k + ']';
-            var html = '<div class="efopt-subfield-row" style="border:1px solid #dce7fb;border-radius:5px;background:#fff;padding:8px 10px;margin-bottom:8px">'
+            var html = '<div class="efopt-subfield-row">'
                 + '<input type="hidden" name="' + base + '[option_id]" value="">'
-                + '<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">'
-                +   '<label class="efopt-sf-lbl" style="flex:1;min-width:150px">Title'
-                +     '<input type="text" style="width:100%" placeholder="e.g. Enter code" name="' + base + '[title]"></label>'
+                + '<div class="efopt-sf-grid">'
+                +   '<label class="efopt-sf-lbl efopt-sf-grow">Title'
+                +     '<input type="text" placeholder="e.g. Enter code" name="' + base + '[title]"></label>'
                 +   '<label class="efopt-sf-lbl">Type'
-                +     '<select class="efopt-subtype" onchange="window.efoptSubTypeChanged(this)" name="' + base + '[type]" style="width:130px;display:block">'
+                +     '<select class="efopt-subtype" onchange="window.efoptSubTypeChanged(this)" name="' + base + '[type]">'
                 +       '<option value="field">Text</option><option value="area">Text Area</option><option value="file">File Upload</option>'
                 +       '<option value="drop_down">Drop-down</option><option value="radio">Radio</option><option value="checkbox">Checkbox</option>'
                 +     '</select></label>'
-                +   '<label class="efopt-sf-lbl efopt-sf-check" style="white-space:nowrap"><input type="checkbox" name="' + base + '[is_required]" value="1"> Required</label>'
-                +   '<label class="efopt-sf-lbl">Price<input type="number" step="0.01" style="width:80px;display:block" placeholder="0.00" name="' + base + '[price]"></label>'
-                +   '<button type="button" class="efopt-del-btn" style="margin-bottom:2px" onclick="this.closest(\'.efopt-subfield-row\').remove()">×</button>'
+                +   '<label class="efopt-sf-lbl efopt-sf-check"><input type="checkbox" name="' + base + '[is_required]" value="1"> Required</label>'
+                +   '<label class="efopt-sf-lbl">Price<input type="number" step="0.01" placeholder="0.00" name="' + base + '[price]"></label>'
+                +   '<button type="button" class="efopt-del-btn" onclick="this.closest(\'.efopt-subfield-row\').remove()">×</button>'
                 + '</div>'
-                + '<div class="efopt-subvalues" style="margin-top:8px;padding-left:12px;border-left:2px dashed #bcd0f5;display:none">'
-                +   '<div style="font-size:10.5px;color:#0535F5;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Choices</div>'
+                + '<div class="efopt-subvalues" style="display:none">'
+                +   '<div class="efopt-sv-cap">Choices</div>'
                 +   '<div class="efopt-subvalues-list" data-next-sv="0"></div>'
-                +   '<button type="button" class="efopt-add-btn" style="font-size:10.5px;padding:3px 8px" onclick="window.efoptAddSubValue(this)">+ Add sub value</button>'
+                +   '<button type="button" class="efopt-add-btn efopt-btn-sm" onclick="window.efoptAddSubValue(this)">+ Add sub value</button>'
                 + '</div>'
                 + '</div>';
             list.insertAdjacentHTML('beforeend', html);
@@ -639,10 +634,10 @@ $categories    = $block->getCategoryOptions();
             var hidden = row.querySelector('input[name$="[option_id]"]');
             var base = hidden.name.replace(/\[option_id\]$/, '');
             var j = parseInt(list.dataset.nextSv || '0', 10);
-            var html = '<div class="efopt-subvalue-row" style="display:flex;gap:6px;align-items:center;margin-bottom:4px">'
+            var html = '<div class="efopt-subvalue-row">'
                 + '<input type="hidden" name="' + base + '[sub_values][' + j + '][value_id]" value="">'
-                + '<input type="text" style="flex:1" placeholder="Choice label" name="' + base + '[sub_values][' + j + '][title]">'
-                + '<input type="number" step="0.01" style="width:80px" placeholder="Price" name="' + base + '[sub_values][' + j + '][price]">'
+                + '<input type="text" placeholder="Choice label" name="' + base + '[sub_values][' + j + '][title]">'
+                + '<input type="number" step="0.01" class="efopt-sv-price" placeholder="Price" name="' + base + '[sub_values][' + j + '][price]">'
                 + '<button type="button" class="efopt-del-btn" onclick="this.closest(\'.efopt-subvalue-row\').remove()">×</button>'
                 + '</div>';
             list.insertAdjacentHTML('beforeend', html);
