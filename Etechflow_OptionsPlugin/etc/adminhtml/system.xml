@@ -59,7 +59,7 @@
                        showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Default Selected Choice</label>
                     <source_model>Etechflow\OptionsPlugin\Model\Source\DefaultChoice</source_model>
-                    <comment>Which radio is preselected on PDP load. <strong>None</strong> = customer must actively pick.</comment>
+                    <comment><![CDATA[Which radio is preselected on PDP load. <strong>None</strong> = customer must actively pick.]]></comment>
                 </field>
             </group>
         </section>
