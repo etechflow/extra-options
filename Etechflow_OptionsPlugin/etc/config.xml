@@ -47,6 +47,11 @@
                 <extra_input_help></extra_input_help>
                 <extra_input_max_length>0</extra_input_max_length>
             </fields>
+            <appearance>
+                <adopt_theme_colors>1</adopt_theme_colors>
+                <card_layout>1</card_layout>
+                <accent_color></accent_color>
+            </appearance>
         </etechflow_options>
     </default>
 </config>

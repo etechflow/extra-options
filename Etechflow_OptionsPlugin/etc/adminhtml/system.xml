@@ -62,6 +62,33 @@
                     <comment><![CDATA[Which radio is preselected on PDP load. <strong>None</strong> = customer must actively pick.]]></comment>
                 </field>
             </group>
+
+            <group id="appearance" translate="label" type="text" sortOrder="40"
+                   showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Appearance</label>
+                <comment><![CDATA[Make the product-option UI blend into <strong>any</strong> active theme (Luma, Adobe Commerce, Hyvä, or custom). Colours are read live from the running theme — nothing is hard-coded.]]></comment>
+
+                <field id="adopt_theme_colors" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Adopt Theme Colours</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[When <strong>Yes</strong>, the extension auto-detects the active theme's accent, text and border colours at runtime and styles the options to match. Works on Luma, Adobe Commerce, Hyvä and custom themes.]]></comment>
+                </field>
+
+                <field id="card_layout" translate="label comment" type="select" sortOrder="20"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Themed Option Cards</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Render each choice as a bordered card that highlights in the theme colour when selected. Set to <strong>No</strong> to keep your theme's native option layout and only adopt colours.]]></comment>
+                </field>
+
+                <field id="accent_color" translate="label comment" type="text" sortOrder="30"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Accent Colour Override</label>
+                    <comment><![CDATA[Optional. A hex colour like <strong>#1979c3</strong> to force the accent. Leave blank to auto-use the colour detected from the live theme.]]></comment>
+                    <depends><field id="adopt_theme_colors">1</field></depends>
+                </field>
+            </group>
         </section>
     </system>
 </config>

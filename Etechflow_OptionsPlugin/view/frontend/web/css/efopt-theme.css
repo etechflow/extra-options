@@ -1,0 +1,100 @@
+/*
+ * Etechflow_OptionsPlugin — theme-adaptive option styling.
+ *
+ * Every colour here is a CSS custom property that efopt-theme-adopt.js fills in
+ * at runtime from the LIVE theme (Luma / Adobe Commerce / Hyvä / custom). The
+ * values below are only fallbacks used for the split-second before the JS runs,
+ * or if colour detection finds nothing — so the UI is never unstyled or broken.
+ *
+ * Two layers:
+ *   .efopt-choice            → always applied when "Adopt theme colours" is on
+ *                              (accent on the radio/checkbox, selected emphasis)
+ *   .efopt-card              → added on top when "Themed option cards" is on
+ *                              (the bordered card layout)
+ */
+:root {
+    --efopt-accent: #1979c3;                      /* overwritten by JS from theme */
+    --efopt-accent-soft: rgba(25, 121, 195, 0.10);
+    --efopt-accent-border: rgba(25, 121, 195, 0.45);
+    --efopt-text: inherit;
+    --efopt-border: rgba(0, 0, 0, 0.16);
+    --efopt-muted: rgba(0, 0, 0, 0.6);
+    --efopt-surface: #fff;
+    --efopt-radius: 8px;
+}
+
+/* Accent the native radio/checkbox controls to the theme colour (all browsers
+   that support accent-color; harmless elsewhere). */
+.efopt-choice input[type="radio"],
+.efopt-choice input[type="checkbox"] {
+    accent-color: var(--efopt-accent);
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    cursor: pointer;
+}
+
+/* Selected emphasis — applies in BOTH "colours only" and "cards" modes. */
+.efopt-choice--selected > label,
+.efopt-choice--selected label.label {
+    color: var(--efopt-accent);
+    font-weight: 600;
+}
+
+/* ── Card layout (only when .efopt-card is present) ─────────────────────── */
+.efopt-card {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border: 1px solid var(--efopt-border);
+    border-radius: var(--efopt-radius);
+    padding: 0.7rem 0.9rem;
+    margin: 0 0 0.5rem;
+    background: var(--efopt-surface);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.efopt-card:hover {
+    border-color: var(--efopt-accent-border);
+}
+
+.efopt-card.efopt-choice--selected {
+    border-color: var(--efopt-accent);
+    background: var(--efopt-accent-soft);
+    box-shadow: inset 0 0 0 1px var(--efopt-accent);
+}
+
+/* Make the label fill the card and stay clickable; keep the price subtle. */
+.efopt-card > label,
+.efopt-card label.label {
+    flex: 1 1 auto;
+    margin: 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.efopt-card .price-notice,
+.efopt-card .price-wrapper {
+    color: var(--efopt-muted);
+    white-space: nowrap;
+}
+
+.efopt-card.efopt-choice--selected .price-notice,
+.efopt-card.efopt-choice--selected .price-wrapper {
+    color: var(--efopt-accent);
+}
+
+/* Tighten the group spacing a touch so cards read as a set. */
+.efopt-themed .efopt-card + .efopt-card {
+    margin-top: 0.15rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .efopt-card {
+        transition: none;
+    }
+}

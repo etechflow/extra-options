@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Etechflow\OptionsPlugin\ViewModel;
 
+use Etechflow\OptionsPlugin\Model\Config;
 use Magento\Catalog\Helper\Data as CatalogHelper;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
@@ -22,8 +23,24 @@ class OptionDefaults implements ArgumentInterface
 {
     public function __construct(
         private readonly CatalogHelper $catalogHelper,
-        private readonly ResourceConnection $resourceConnection
+        private readonly ResourceConnection $resourceConnection,
+        private readonly Config $config
     ) {}
+
+    /**
+     * Appearance settings handed to the frontend JS so it knows whether to adopt
+     * theme colours, whether to draw cards, and any manual accent override.
+     *
+     * @return array{adopt:bool,cards:bool,accent:string}
+     */
+    public function getAppearance(): array
+    {
+        return [
+            'adopt'  => $this->config->isAdoptThemeColors(),
+            'cards'  => $this->config->isCardLayout(),
+            'accent' => $this->config->getAccentColor(),
+        ];
+    }
 
     /**
      * @return array<int,int> magento_option_id → magento_option_type_id to default-select

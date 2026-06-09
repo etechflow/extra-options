@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <!-- Theme-adaptive option styling. Colours are filled in at runtime by
+             efopt-theme-adopt.js from the live theme; this only ships fallbacks. -->
+        <css src="Etechflow_OptionsPlugin::css/efopt-theme.css"/>
+    </head>
     <body>
         <!-- before.body.end is a Hyva container that renders right before </body>
              so JS can find option inputs that are already in the DOM. -->

@@ -48,6 +48,11 @@ class Config
     public const XML_F_EXTRA_HELP          = 'etechflow_options/fields/extra_input_help';
     public const XML_F_EXTRA_MAX_LENGTH    = 'etechflow_options/fields/extra_input_max_length';
 
+    /* ===== Appearance / theme adoption ===== */
+    public const XML_ADOPT_THEME_COLORS = 'etechflow_options/appearance/adopt_theme_colors';
+    public const XML_CARD_LAYOUT        = 'etechflow_options/appearance/card_layout';
+    public const XML_ACCENT_COLOR       = 'etechflow_options/appearance/accent_color';
+
     private ScopeConfigInterface $scopeConfig;
 
     public function __construct(ScopeConfigInterface $scopeConfig)
@@ -135,6 +140,39 @@ class Config
     public function getExtraInputPlaceholder(): string   { return $this->str(self::XML_F_EXTRA_PLACEHOLDER); }
     public function getExtraInputHelp(): string          { return $this->str(self::XML_F_EXTRA_HELP); }
     public function getExtraInputMaxLength(): int        { return (int)$this->str(self::XML_F_EXTRA_MAX_LENGTH); }
+
+    /* ===== Appearance getters ===== */
+
+    /** Master switch: auto-read the active theme's colors and apply them to the option UI. */
+    public function isAdoptThemeColors(): bool
+    {
+        // Default ON when unset so enabling the module "just adopts" the theme.
+        $val = $this->scopeConfig->getValue(self::XML_ADOPT_THEME_COLORS, ScopeInterface::SCOPE_STORE);
+        return $val === null ? true : (bool)(int)$val;
+    }
+
+    /** Whether to render the option choices as themed cards (vs. leave the theme's native layout). */
+    public function isCardLayout(): bool
+    {
+        $val = $this->scopeConfig->getValue(self::XML_CARD_LAYOUT, ScopeInterface::SCOPE_STORE);
+        return $val === null ? true : (bool)(int)$val;
+    }
+
+    /**
+     * Optional manual accent override. Empty = use the colour auto-detected from
+     * the live theme. Returns a validated #hex (3/4/6/8 digit) or ''.
+     */
+    public function getAccentColor(): string
+    {
+        $raw = trim((string)$this->scopeConfig->getValue(self::XML_ACCENT_COLOR, ScopeInterface::SCOPE_STORE));
+        if ($raw === '') {
+            return '';
+        }
+        if ($raw[0] !== '#') {
+            $raw = '#' . $raw;
+        }
+        return preg_match('/^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/', $raw) ? $raw : '';
+    }
 
     /* Backward-compat aliases for the existing Keystation theme template */
     public function getDefaultRadioChoice(): string { return $this->getDefaultChoice(); }
