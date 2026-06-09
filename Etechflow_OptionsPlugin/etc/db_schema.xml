@@ -43,6 +43,7 @@
         <column xsi:type="varchar" name="file_extension" length="64" nullable="true" comment="Allowed file extensions"/>
         <column xsi:type="int" name="default_value_id" padding="11" unsigned="false" nullable="true" comment="Which value (FK efopt_template_option_value.value_id) is default-selected on the storefront"/>
         <column xsi:type="int" name="parent_value_id" padding="11" unsigned="false" nullable="true" comment="If set, this option is a sub-field shown only when the given value of its parent option is selected"/>
+        <column xsi:type="varchar" name="checkbox_mode" length="16" nullable="false" default="multi" comment="Checkbox type only: multi = customer can tick several; single = storefront enforces exactly one"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="option_id"/>
         </constraint>

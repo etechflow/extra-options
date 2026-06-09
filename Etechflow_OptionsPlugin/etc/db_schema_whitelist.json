@@ -31,7 +31,8 @@
             "image_size_y": true,
             "file_extension": true,
             "default_value_id": true,
-            "parent_value_id": true
+            "parent_value_id": true,
+            "checkbox_mode": true
         },
         "index": {
             "EFOPT_TPL_OPTION_TEMPLATE_ID_SORT": true

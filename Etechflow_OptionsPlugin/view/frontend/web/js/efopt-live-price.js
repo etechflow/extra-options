@@ -146,6 +146,31 @@
         });
     }
 
+    function enforceCheckboxModes() {
+        // window.efoptCheckboxModes = {magento_option_id: 'single'} — for these
+        // option groups the admin chose "tick only one". Magento renders them as
+        // native (multi) checkboxes; we make them behave like radios while keeping
+        // the square checkbox look: checking one box clears the rest in its group.
+        var modes = window.efoptCheckboxModes;
+        if (!modes || typeof modes !== 'object') return;
+        Object.keys(modes).forEach(function (optId) {
+            if (modes[optId] !== 'single') return;
+            var sel = 'input[type="checkbox"][name="options[' + optId + '][]"]';
+            var boxes = Array.prototype.slice.call(document.querySelectorAll(sel));
+            if (boxes.length < 2) return;
+            boxes.forEach(function (box) {
+                box.addEventListener('change', function () {
+                    if (box.checked) {
+                        boxes.forEach(function (other) {
+                            if (other !== box) { other.checked = false; }
+                        });
+                        updatePrice();
+                    }
+                });
+            });
+        });
+    }
+
     function init() {
         var target = findPriceTarget();
         if (!target) return;          // not a PDP
@@ -163,6 +188,7 @@
             }
         }, true);
 
+        enforceCheckboxModes();
         applyDefaults();
         // One initial recompute in case defaults were applied.
         updatePrice();

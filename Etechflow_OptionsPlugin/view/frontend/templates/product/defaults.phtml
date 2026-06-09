@@ -10,5 +10,6 @@ $jsSrc = $block->getViewFileUrl('Etechflow_OptionsPlugin::js/efopt-live-price.js
 ?>
 <script>
     window.efoptTemplateDefaults = <?= /* @noEscape */ json_encode((object) $defaults) ?>;
+    window.efoptCheckboxModes = <?= /* @noEscape */ json_encode((object) $vm->getCheckboxModes()) ?>;
 </script>
 <script src="<?= $escaper->escapeUrl($jsSrc) ?>" defer></script>

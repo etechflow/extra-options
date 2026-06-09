@@ -21,6 +21,11 @@
         <plugin name="etechflow_options_conditional_required"
                 type="Etechflow\OptionsPlugin\Plugin\ConditionalRequired"
                 sortOrder="20"/>
+        <!-- Trim single-mode checkbox submissions to one value (server-side
+             guarantee behind the storefront single-select JS). -->
+        <plugin name="etechflow_options_checkbox_single_mode"
+                type="Etechflow\OptionsPlugin\Plugin\CheckboxSingleMode"
+                sortOrder="8"/>
         <!-- Multi-file image upload: replace the native single-file slot with
              a JSON list of paths from /etechflow/files/upload. Runs BEFORE
              ConditionalRequired so that conditional validation sees the

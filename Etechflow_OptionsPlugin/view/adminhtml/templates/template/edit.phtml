@@ -118,7 +118,7 @@ $categories    = $block->getCategoryOptions();
                                 <?php foreach ([
                                     'drop_down' => 'Drop-down (single select)',
                                     'radio'     => 'Radio (single select)',
-                                    'checkbox'  => 'Checkbox (multi-select)',
+                                    'checkbox'  => 'Checkbox',
                                     'multiple'  => 'Multi-select list',
                                     'field'     => 'Text Field',
                                     'area'      => 'Text Area',
@@ -126,6 +126,13 @@ $categories    = $block->getCategoryOptions();
                                 ] as $val => $lbl): ?>
                                     <option value="<?= $val ?>" <?= ($o['type'] ?? '')===$val?'selected':'' ?>><?= $escaper->escapeHtml($lbl) ?></option>
                                 <?php endforeach ?>
+                            </select>
+                            <?php $cbMode = (string)($o['checkbox_mode'] ?? 'multi'); ?>
+                            <select name="data[options][<?= $optIndex ?>][checkbox_mode]" class="efopt-cb-mode"
+                                    style="margin-top:5px;font-size:11px<?= ($o['type'] ?? '')==='checkbox' ? '' : ';display:none' ?>"
+                                    title="<?= $escaper->escapeHtmlAttr(__('How many boxes a customer may tick')) ?>">
+                                <option value="multi"  <?= $cbMode==='multi'  ? 'selected' : '' ?>>↳ Customer can tick MULTIPLE</option>
+                                <option value="single" <?= $cbMode==='single' ? 'selected' : '' ?>>↳ Customer can tick ONLY ONE</option>
                             </select>
                         </td>
                         <td><input type="checkbox" name="data[options][<?= $optIndex ?>][is_required]" value="1" <?= ($o['is_required']??0) ? 'checked' : '' ?>></td>
@@ -454,10 +461,14 @@ $categories    = $block->getCategoryOptions();
         // Called when a type dropdown changes on any row (new or existing).
         window.efoptTypeChanged = function (sel) {
             var row  = sel.closest('tr.efopt-option-row');
-            var cell = row ? row.querySelector('td:nth-child(5)') : null;
-            if (!cell) return;
+            if (!row) return;
+            var cell = row.querySelector('td:nth-child(5)');
             var optIdx = parseInt(sel.name.match(/\[(\d+)\]/)[1], 10);
             var type   = sel.value;
+            // Show the "single vs multiple" selector ONLY for checkbox type.
+            var cbMode = row.querySelector('select.efopt-cb-mode');
+            if (cbMode) { cbMode.style.display = (type === 'checkbox') ? '' : 'none'; }
+            if (!cell) return;
             if (SELECTABLE_TYPES.indexOf(type) >= 0) {
                 // Show values table if not already present.
                 if (!cell.querySelector('table.efopt-values-table')) {
@@ -480,12 +491,16 @@ $categories    = $block->getCategoryOptions();
                 + '<td><select name="data[options][' + nextOptIdx + '][type]" class="efopt-type-sel" onchange="window.efoptTypeChanged(this)">'
                 +     '<option value="drop_down">Drop-down (single select)</option>'
                 +     '<option value="radio">Radio (single select)</option>'
-                +     '<option value="checkbox">Checkbox (multi-select)</option>'
+                +     '<option value="checkbox">Checkbox</option>'
                 +     '<option value="multiple">Multi-select list</option>'
                 +     '<option value="field">Text Field</option>'
                 +     '<option value="area">Text Area</option>'
                 +     '<option value="file">File Upload</option>'
-                + '</select></td>'
+                + '</select>'
+                +     '<select name="data[options][' + nextOptIdx + '][checkbox_mode]" class="efopt-cb-mode" style="margin-top:5px;font-size:11px;display:none">'
+                +         '<option value="multi">↳ Customer can tick MULTIPLE</option>'
+                +         '<option value="single">↳ Customer can tick ONLY ONE</option>'
+                +     '</select></td>'
                 + '<td><input type="checkbox" name="data[options][' + nextOptIdx + '][is_required]" value="1"></td>'
                 + '<td><input type="number" step="0.01" name="data[options][' + nextOptIdx + '][price]"></td>'
                 + '<td>' + efoptValuesHtml(nextOptIdx) + '</td>'

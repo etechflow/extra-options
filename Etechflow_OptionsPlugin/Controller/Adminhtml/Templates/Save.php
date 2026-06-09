@@ -169,6 +169,11 @@ class Save extends Action
             $option->setData('sort_order', $sort++);
             $option->setData('title', $title);
             $option->setData('type', (string)($row['type'] ?? 'drop_down'));
+            // Checkbox sub-mode: 'single' makes the storefront enforce exactly one
+            // tick (radio-like) while keeping the checkbox look. Only meaningful for
+            // type=checkbox; stored as 'multi' otherwise so the column is always sane.
+            $cbMode = (string)($row['checkbox_mode'] ?? 'multi');
+            $option->setData('checkbox_mode', $cbMode === 'single' ? 'single' : 'multi');
             $option->setData('is_required', (int)($row['is_required'] ?? 0));
             $option->setData('price', isset($row['price']) && $row['price'] !== '' ? (float)$row['price'] : null);
             $option->setData('price_type', (string)($row['price_type'] ?? 'fixed'));

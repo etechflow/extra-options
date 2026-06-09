@@ -84,4 +84,39 @@ class OptionDefaults implements ArgumentInterface
         }
         return $defaults;
     }
+
+    /**
+     * Map of magento_option_id → 'single' for every synced checkbox option on the
+     * current product whose template is set to single-selection mode. The frontend
+     * JS uses this to enforce "tick only one" on those checkbox groups while keeping
+     * the checkbox appearance.
+     *
+     * @return array<int,string>
+     */
+    public function getCheckboxModes(): array
+    {
+        $product = $this->catalogHelper->getProduct();
+        if (!$product || !$product->getId()) { return []; }
+
+        $conn = $this->resourceConnection->getConnection();
+        $rows = $conn->fetchCol(
+            $conn->select()
+                ->from(['ep' => $this->resourceConnection->getTableName('efopt_template_product')], ['magento_option_id'])
+                ->join(
+                    ['eo' => $this->resourceConnection->getTableName('efopt_template_option')],
+                    'ep.template_option_id = eo.option_id',
+                    []
+                )
+                ->where('ep.product_id = ?', (int)$product->getId())
+                ->where('ep.magento_option_id IS NOT NULL')
+                ->where('eo.type = ?', 'checkbox')
+                ->where('eo.checkbox_mode = ?', 'single')
+        );
+
+        $modes = [];
+        foreach ($rows as $optionId) {
+            $modes[(int)$optionId] = 'single';
+        }
+        return $modes;
+    }
 }
