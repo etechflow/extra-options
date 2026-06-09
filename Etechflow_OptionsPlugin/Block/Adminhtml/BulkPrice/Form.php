@@ -92,6 +92,53 @@ class Form extends Template
     }
 
     /**
+     * Products linked to the template, for the searchable picker.
+     *
+     * @return array<int,array{id:int,name:string,sku:string}>
+     */
+    public function getLinkedProductsForPicker(int $templateId): array
+    {
+        if (!$templateId) { return []; }
+        $conn = $this->resourceConnection->getConnection();
+        $nameAttrId = (int) $conn->fetchOne(
+            "SELECT attribute_id FROM eav_attribute WHERE entity_type_id = 4 AND attribute_code = 'name'"
+        );
+        $rows = $conn->fetchAll(
+            $conn->select()
+                ->from(['etp' => $this->resourceConnection->getTableName('efopt_template_product')], [])
+                ->join(
+                    ['e' => $this->resourceConnection->getTableName('catalog_product_entity')],
+                    'etp.product_id = e.entity_id',
+                    ['entity_id', 'sku']
+                )
+                ->joinLeft(
+                    ['v' => $this->resourceConnection->getTableName('catalog_product_entity_varchar')],
+                    "e.entity_id = v.entity_id AND v.attribute_id = {$nameAttrId} AND v.store_id = 0",
+                    ['name' => 'v.value']
+                )
+                ->where('etp.template_id = ?', $templateId)
+                ->where('etp.magento_option_id IS NOT NULL')
+                ->group('e.entity_id')
+                ->order('v.value ASC')
+        );
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'id'   => (int) $r['entity_id'],
+                'name' => (string) ($r['name'] ?? ''),
+                'sku'  => (string) $r['sku'],
+            ];
+        }
+        return $out;
+    }
+
+    /** @return string JSON for the picker */
+    public function getLinkedProductsJson(int $templateId): string
+    {
+        return json_encode($this->getLinkedProductsForPicker($templateId), JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
      * Category options for the picker. When a template is selected, restrict the
      * list to categories that ACTUALLY contain a product linked to that template
      * (plus any category the template is directly linked to) — picking anything
