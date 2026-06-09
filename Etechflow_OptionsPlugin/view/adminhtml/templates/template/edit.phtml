@@ -21,15 +21,18 @@ $categories    = $block->getCategoryOptions();
 .efopt-field-row label{flex:0 0 180px;color:#41362f;font-size:13px}
 .efopt-field-row input[type=text],.efopt-field-row textarea,.efopt-field-row select{flex:1;padding:6px 10px;border:1px solid #ccc;border-radius:3px;background:#fff}
 .efopt-field-row textarea{min-height:60px}
-.efopt-options-table{width:100%;border-collapse:collapse;table-layout:fixed}
-.efopt-options-table th,.efopt-options-table td{padding:6px 8px;border-bottom:1px solid #eee;vertical-align:top;text-align:left}
-.efopt-options-table th{background:#f5f5f5;font-weight:600;font-size:12px;text-transform:uppercase;color:#666}
-.efopt-options-table input[type=text],.efopt-options-table input[type=number],.efopt-options-table select{padding:4px 6px;border:1px solid #ccc;border-radius:3px;width:100%;box-sizing:border-box}
-.efopt-options-table .col-narrow{width:80px}
-.efopt-options-table .col-actions{width:70px;text-align:center}
-.efopt-options-table .col-title{min-width:200px}
-.efopt-values-table{margin-top:4px;width:100%;border-collapse:collapse;background:#fafafa}
-.efopt-values-table th,.efopt-values-table td{padding:3px 6px;border-bottom:1px dashed #ddd;font-size:12px}
+/* ID selectors + !important so the Magento admin theme's generic `table` rules
+   can't override our column sizing (it was resetting table-layout, collapsing the
+   Values column and pushing its content off the right edge). */
+#efopt-options-table{width:100%!important;max-width:100%!important;border-collapse:collapse;table-layout:fixed!important}
+#efopt-options-table th,#efopt-options-table td{padding:6px 8px;border-bottom:1px solid #eee;vertical-align:top;text-align:left;overflow:hidden}
+#efopt-options-table th{background:#f5f5f5;font-weight:600;font-size:12px;text-transform:uppercase;color:#666}
+#efopt-options-table input[type=text],#efopt-options-table input[type=number],#efopt-options-table select{padding:4px 6px;border:1px solid #ccc;border-radius:3px;width:100%;box-sizing:border-box}
+#efopt-options-table .col-narrow{width:80px}
+#efopt-options-table .col-actions{width:70px;text-align:center}
+#efopt-options-table .col-title{min-width:200px}
+.efopt-values-table{margin-top:4px;width:100%!important;border-collapse:collapse;background:#fafafa;table-layout:fixed!important}
+.efopt-values-table th,.efopt-values-table td{padding:3px 6px;border-bottom:1px dashed #ddd;font-size:12px;overflow:hidden}
 .efopt-add-btn{background:#0072c6;color:#fff;border:none;padding:6px 12px;border-radius:3px;cursor:pointer;font-size:12px}
 .efopt-add-btn:hover{background:#005a9e}
 .efopt-del-btn{background:#c00;color:#fff;border:none;padding:3px 7px;border-radius:3px;cursor:pointer;font-size:11px}
