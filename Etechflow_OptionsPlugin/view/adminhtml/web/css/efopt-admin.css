@@ -48,3 +48,16 @@
 .efopt-mig-card h3{margin:0 0 10px}
 .efopt-mig-card ol{padding-left:20px;line-height:1.8}
 .efopt-mig-card .warning{background:#fff3cd;border:1px solid #ffeeba;padding:10px;border-radius:4px;color:#856404;margin-top:10px}
+
+/* ---- Templates listing — clean the "Add New" action area + primary button
+        (scoped to this page only; matches the Edit page's button styling) ---- */
+body.efopt-templates-index .page-main-actions,
+body.adminhtml-efopt-templates-index .page-main-actions{background:transparent;border:0;box-shadow:none;padding:0;margin:4px 0 14px;min-height:0}
+body.efopt-templates-index .page-main-actions .page-actions,
+body.adminhtml-efopt-templates-index .page-main-actions .page-actions{float:none;width:auto;text-align:right}
+body.efopt-templates-index .page-actions-buttons > button.primary,
+body.efopt-templates-index .page-actions-buttons > button.action-primary,
+body.adminhtml-efopt-templates-index .page-actions-buttons > button.primary,
+body.adminhtml-efopt-templates-index .page-actions-buttons > button.action-primary{background-color:#0072c6;border:1px solid #0072c6;color:#fff;font-weight:600;padding:8px 20px;border-radius:3px}
+body.efopt-templates-index .page-actions-buttons > button.primary:hover,
+body.adminhtml-efopt-templates-index .page-actions-buttons > button.primary:hover{background-color:#005a9e;border-color:#005a9e}

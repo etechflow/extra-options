@@ -3,6 +3,9 @@
       layout="admin-2columns-left"
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <update handle="styles"/>
+    <head>
+        <css src="Etechflow_OptionsPlugin::css/efopt-admin.css"/>
+    </head>
     <body>
         <referenceContainer name="content">
             <uiComponent name="efopt_templates_listing"/>
