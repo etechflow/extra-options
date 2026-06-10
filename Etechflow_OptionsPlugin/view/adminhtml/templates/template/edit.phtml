@@ -81,18 +81,19 @@ $categories    = $block->getCategoryOptions();
     <?= $block->getBlockHtml('formkey') ?>
     <input type="hidden" name="data[template_id]" value="<?= (int)$templateId ?>">
 
+    <style>.page-actions a:hover,.page-actions button:hover{filter:brightness(.95)}</style>
     <div class="page-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px">
-        <a href="<?= $escaper->escapeUrl($block->getBackUrl()) ?>" class="action-secondary"
-           style="padding:8px 16px;border:1px solid #ccc;border-radius:3px;text-decoration:none;color:#333">
+        <a href="<?= $escaper->escapeUrl($block->getBackUrl()) ?>"
+           style="display:inline-flex;align-items:center;padding:8px 16px;background:#fff;border:1px solid #ccc;border-radius:3px;text-decoration:none;color:#333;font-weight:500">
             ← <?= $escaper->escapeHtml(__('Back')) ?>
         </a>
         <?php if (!$isNew): ?>
-            <a href="#" class="action-secondary" style="padding:8px 16px;border:1px solid #ccc;border-radius:3px;text-decoration:none;color:#a00"
+            <a href="#" style="display:inline-flex;align-items:center;padding:8px 16px;background:#fff;border:1px solid #e0a3a3;border-radius:3px;text-decoration:none;color:#c0392b;font-weight:500"
                onclick="if(confirm('<?= $escaper->escapeJs(__('Delete this template? This will also remove the synced options from every linked product on the storefront.')) ?>'))location.href='<?= $escaper->escapeUrl($block->getDeleteUrl()) ?>';return false;">
                 <?= $escaper->escapeHtml(__('Delete')) ?>
             </a>
-            <a href="<?= $escaper->escapeUrl($block->getResyncUrl()) ?>" class="action-secondary"
-               style="padding:8px 16px;border:1px solid #ccc;border-radius:3px;text-decoration:none;color:#333"
+            <a href="<?= $escaper->escapeUrl($block->getResyncUrl()) ?>"
+               style="display:inline-flex;align-items:center;padding:8px 16px;background:#fff;border:1px solid #ccc;border-radius:3px;text-decoration:none;color:#333;font-weight:500"
                onclick="return confirm('<?= $escaper->escapeJs(__('Push template options to every linked product?')) ?>');">
                 <?= $escaper->escapeHtml(__('Re-sync All Linked Products')) ?>
             </a>
