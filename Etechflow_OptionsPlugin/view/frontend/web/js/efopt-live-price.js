@@ -116,7 +116,13 @@
             var t = e.target;
             if (!t || t.type !== 'checkbox' || !t.checked || !singleNames[t.name]) { return; }
             document.querySelectorAll('input[type="checkbox"][name="' + t.name + '"]').forEach(function (o) {
-                if (o !== t) { o.checked = false; }
+                if (o !== t && o.checked) {
+                    o.checked = false;
+                    // Fire change so the theme's native price widget removes the
+                    // de-selected option's price. Clearing .checked alone is silent —
+                    // the widget keeps charging for it (the "prices keep adding up" bug).
+                    o.dispatchEvent(new Event('change', { bubbles: true }));
+                }
             });
             renderPrice();
         }, true);

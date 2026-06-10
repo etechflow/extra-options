@@ -65,7 +65,12 @@
         var m = (target.name || '').match(/^options\[(\d+)\]\[\]$/);
         if (!m || modes[m[1]] !== 'single') { return; }
         document.querySelectorAll('input[type="checkbox"][name="options[' + m[1] + '][]"]').forEach(function (cb) {
-            if (cb !== target) { cb.checked = false; }
+            if (cb !== target && cb.checked) {
+                cb.checked = false;
+                // Fire change so the theme price widget drops the de-selected option's
+                // price (a silent .checked=false leaves it counted).
+                cb.dispatchEvent(new Event('change', { bubbles: true }));
+            }
         });
     }
 
