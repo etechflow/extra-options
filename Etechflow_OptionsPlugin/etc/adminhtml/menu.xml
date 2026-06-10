@@ -2,13 +2,17 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
     <menu>
-        <!-- Top-level "eTechFlow" entry on the admin sidebar. Parent nodes
-             MUST NOT have an action attribute (Magento's menu validator
-             rejects action="" with "less than 3 characters"). -->
+        <!-- "Extra Options" column under the SHARED eTechFlow sidebar menu.
+             eTechFlow::root is declared by module-shipping-table-rates; we only
+             REFERENCE it here as the parent. Do NOT re-declare eTechFlow::root —
+             Magento's menu schema (uniqueAddItemId) rejects a duplicate id in the
+             merged config and fatals the whole admin menu.
+             Parent nodes MUST NOT have an action attribute. -->
         <add id="Etechflow_OptionsPlugin::root"
-             title="eTechFlow"
+             title="Extra Options"
              module="Etechflow_OptionsPlugin"
-             sortOrder="200"
+             parent="eTechFlow::root"
+             sortOrder="60"
              resource="Etechflow_OptionsPlugin::root"/>
 
         <add id="Etechflow_OptionsPlugin::templates"
