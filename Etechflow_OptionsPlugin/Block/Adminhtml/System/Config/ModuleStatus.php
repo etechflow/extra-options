@@ -46,7 +46,6 @@ class ModuleStatus extends Fieldset
     private function renderStatusBanner(): string
     {
         $host          = $this->licenseValidator->getCurrentHost();
-        $isProduction  = $this->licenseValidator->isProductionEnvironment();
         $licenceValid  = $this->licenseValidator->isValid();
         $moduleEnabled = $this->config->isEnabled();
         $hasKey = trim($this->licenseValidator->getConfiguredKey()) !== ''
@@ -57,27 +56,16 @@ class ModuleStatus extends Fieldset
             . 'style="display:inline-block;background:#1979c3;color:#fff;padding:8px 18px;border-radius:4px;'
             . 'text-decoration:none;font-weight:600;font-size:13px;">View Plans &amp; Activate License &rarr;</a></div>';
 
-        if (!$isProduction) {
-            return $this->banner(
-                'info',
-                'ℹ️ Production Environment = No',
-                'The Production Environment toggle is off, so the admin Option-Templates tools run '
-                . 'without a licence. Use this on dev/staging domains. Switch to <strong>Yes</strong> '
-                . 'before going live so a missing licence is flagged.'
-            );
-        }
-
         if (!$licenceValid) {
             if (!$hasKey) {
                 return $this->banner(
                     'warning',
-                    '⚠️ Licence key missing',
-                    'You’re on production host <code>' . $this->escapeHtml($host) . '</code> but no licence key has been entered. '
-                    . 'The admin Option-Templates, Bulk-Price and Migration pages are locked until a valid key is saved below. '
-                    . 'The storefront and existing product options are unaffected. '
-                    . 'Choose a plan and pay by card to get your key instantly, paste an existing key in the '
-                    . '<strong>License Key</strong> field, or — if this is a dev/staging install — set '
-                    . '<strong>Production Environment = No</strong>.'
+                    '⚠️ Licence key required',
+                    'No licence key has been entered for host <code>' . $this->escapeHtml($host) . '</code>. '
+                    . 'A valid licence is always required — the admin Option-Templates, Bulk-Price and Migration pages '
+                    . 'are locked until a valid key is saved below. The storefront and existing product options are unaffected. '
+                    . 'Choose a plan and pay by card to get your key instantly, or paste an existing key in the '
+                    . '<strong>License Key</strong> field.'
                     . $gateBtn
                 );
             }

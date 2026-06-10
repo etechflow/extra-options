@@ -5,7 +5,6 @@
         <etechflow_options>
             <license>
                 <license_key></license_key>
-                <production_environment>1</production_environment>
                 <portal_url></portal_url>
                 <portal_api_url></portal_api_url>
                 <issued_key></issued_key>
