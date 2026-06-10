@@ -103,21 +103,23 @@
     function enforceCheckboxModes() {
         var modes = window.efoptCheckboxModes;
         if (!modes || typeof modes !== 'object') { return; }
+        var singleNames = {}, any = false;
         Object.keys(modes).forEach(function (optId) {
-            if (modes[optId] !== 'single') { return; }
-            var boxes = Array.prototype.slice.call(
-                document.querySelectorAll('input[type="checkbox"][name="options[' + optId + '][]"]')
-            );
-            if (boxes.length < 2) { return; }
-            boxes.forEach(function (box) {
-                box.addEventListener('change', function () {
-                    if (box.checked) {
-                        boxes.forEach(function (o) { if (o !== box) { o.checked = false; } });
-                        renderPrice();
-                    }
-                });
-            });
+            if (modes[optId] === 'single') { singleNames['options[' + optId + '][]'] = true; any = true; }
         });
+        if (!any) { return; }
+        // Delegated handler on the document (capture phase): when a box in a
+        // "tick only one" group is checked, clear its siblings. Delegation keeps
+        // this working even if the theme/Magento re-renders the option inputs after
+        // load — the old per-box listeners were silently lost on any re-render.
+        document.addEventListener('change', function (e) {
+            var t = e.target;
+            if (!t || t.type !== 'checkbox' || !t.checked || !singleNames[t.name]) { return; }
+            document.querySelectorAll('input[type="checkbox"][name="' + t.name + '"]').forEach(function (o) {
+                if (o !== t) { o.checked = false; }
+            });
+            renderPrice();
+        }, true);
     }
 
     function init() {
