@@ -49,15 +49,23 @@
 .efopt-mig-card ol{padding-left:20px;line-height:1.8}
 .efopt-mig-card .warning{background:#fff3cd;border:1px solid #ffeeba;padding:10px;border-radius:4px;color:#856404;margin-top:10px}
 
-/* ---- Templates listing — clean the "Add New" action area + primary button
-        (scoped to this page only; matches the Edit page's button styling) ---- */
-body.efopt-templates-index .page-main-actions,
-body.adminhtml-efopt-templates-index .page-main-actions{background:transparent;border:0;box-shadow:none;padding:0;margin:4px 0 14px;min-height:0}
+/* ---- Templates listing — clean the "Add New" toolbar + primary button so the
+        grid page matches the Edit page (scoped to this page only; !important to
+        override Magento's .page-main-actions toolbar styling). ---- */
+body.efopt-templates-index .page-main-actions{
+    background:transparent !important;border:0 !important;box-shadow:none !important;
+    padding:0 !important;margin:4px 0 16px !important;min-height:0 !important;width:auto !important}
 body.efopt-templates-index .page-main-actions .page-actions,
-body.adminhtml-efopt-templates-index .page-main-actions .page-actions{float:none;width:auto;text-align:right}
+body.efopt-templates-index .page-main-actions .page-actions-inner{
+    float:none !important;width:auto !important;text-align:right !important;
+    background:transparent !important;border:0 !important;box-shadow:none !important;padding:0 !important;margin:0 !important}
+body.efopt-templates-index .page-main-actions .page-actions-inner:before{content:none !important}
 body.efopt-templates-index .page-actions-buttons > button.primary,
 body.efopt-templates-index .page-actions-buttons > button.action-primary,
-body.adminhtml-efopt-templates-index .page-actions-buttons > button.primary,
-body.adminhtml-efopt-templates-index .page-actions-buttons > button.action-primary{background-color:#0072c6;border:1px solid #0072c6;color:#fff;font-weight:600;padding:8px 20px;border-radius:3px}
+body.efopt-templates-index .page-main-actions button.primary,
+body.efopt-templates-index .page-main-actions button.action-primary{
+    background-color:#0072c6 !important;border:1px solid #0072c6 !important;color:#fff !important;
+    font-weight:600;padding:8px 20px;border-radius:3px;box-shadow:none}
 body.efopt-templates-index .page-actions-buttons > button.primary:hover,
-body.adminhtml-efopt-templates-index .page-actions-buttons > button.primary:hover{background-color:#005a9e;border-color:#005a9e}
+body.efopt-templates-index .page-main-actions button.primary:hover{
+    background-color:#005a9e !important;border-color:#005a9e !important}
