@@ -3,7 +3,6 @@
     "description": "EtechFlow Extra Options for Magento 2 — admin Templates UI (Amasty-Prot style + better), per-category apply, bulk price update page, migration tool from keyword config, conditional-required cut-image / cut-code validation, multi-file image upload (up to 10 files per option), Hyvä + Luma compatible.",
     "type": "magento2-module",
     "license": "proprietary",
-    "version": "2.0.0",
     "keywords": [
         "magento",
         "magento2",
