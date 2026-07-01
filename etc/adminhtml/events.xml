@@ -7,4 +7,15 @@
         <observer name="etechflow_optionsplugin_admin_license_gate"
                   instance="Etechflow\OptionsPlugin\Observer\AdminLicenseGate"/>
     </event>
+
+    <!-- Surface the "update available" admin notification when the merchant opens
+         the module's License gate or the Stores > Configuration page. -->
+    <event name="controller_action_predispatch_efopt_license_gate">
+        <observer name="etechflow_optionsplugin_update_notification_gate"
+                  instance="Etechflow\OptionsPlugin\Observer\AddUpdateNotification"/>
+    </event>
+    <event name="controller_action_predispatch_adminhtml_system_config_edit">
+        <observer name="etechflow_optionsplugin_update_notification_sysconfig"
+                  instance="Etechflow\OptionsPlugin\Observer\AddUpdateNotification"/>
+    </event>
 </config>

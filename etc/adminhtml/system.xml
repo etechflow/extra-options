@@ -25,63 +25,33 @@
             <group id="license" translate="label" type="text" sortOrder="5"
                    showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>License</label>
-                <comment><![CDATA[A valid licence is always required to use the admin Option-Templates, Bulk-Price and Migration tools. Enter your key below or activate a plan from the gate page.]]></comment>
+                <comment><![CDATA[A valid licence is always required to use the admin Option-Templates, Bulk-Price and Migration tools. Paste your key below and Save, or activate a plan from the License page (eTechFlow &rarr; Extra Options &rarr; License).]]></comment>
 
                 <field id="license_key" translate="label comment" type="text"
                        sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>License Key</label>
-                    <comment><![CDATA[
-                        Auto-populated after Stripe purchase. Format: <code>SP-XXXX-XXXX-XXXX-XXXX</code>.<br/>
-                        Bound to your domain. <code>www.</code> prefix normalised — one key works for both.
-                    ]]></comment>
+                    <comment><![CDATA[Paste your eTechFlow <code>SP-XXXX</code> subscription key (generated automatically after checkout) OR a per-module / bundle HMAC key. Leave blank if using a Bundle License Key. Then Save Config and flush the cache to activate. Bound to your domain (<code>www.</code> normalised).]]></comment>
+                </field>
+
+                <field id="issued_key" translate="label comment" type="obscure"
+                       sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Issued Key (auto)</label>
+                    <comment><![CDATA[Set automatically on first successful validation. Used to restore the key after an IP-block event. Do not edit.]]></comment>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
 
                 <field id="portal_url" translate="label comment" type="text"
-                       sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                       sortOrder="25" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>License Portal URL</label>
-                    <comment><![CDATA[
-                        URL of the eTechFlow license portal. Called by the Magento server to validate
-                        SP-XXXX keys and complete Stripe activation.<br/>
-                        Example: <code>https://your-tunnel.ngrok-free.dev</code> or your production portal URL.
-                    ]]></comment>
+                    <comment><![CDATA[eTechFlow licensing portal endpoint. Leave blank to use the default (<code>https://license-service.etechflow.com/license/validate</code>). Update only if your portal URL changes.]]></comment>
                 </field>
 
-                <field id="portal_api_url" translate="label comment" type="text"
+                <field id="bundle_license_key" translate="label comment" type="obscure"
                        sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
-                    <label>License Validation API URL (optional override)</label>
-                    <comment><![CDATA[
-                        Optional override for the server-to-server validation URL.
-                        If blank, the Portal URL above is used.
-                    ]]></comment>
-                </field>
-            </group>
-
-            <group id="payment" translate="label" type="text" sortOrder="7"
-                   showInDefault="1" showInWebsite="0" showInStore="0">
-                <label>Payment (Stripe)</label>
-                <comment><![CDATA[Add your Stripe REST API credentials to enable "Select Plan &amp; Pay" on the gate page. Get them at https://dashboard.stripe.com/test/apikeys.]]></comment>
-
-                <field id="stripe_secret_key" translate="label" type="obscure"
-                       sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
-                    <label>Stripe Secret Key</label>
+                    <label>Bundle License Key</label>
+                    <comment><![CDATA[Shared key that activates every eTechFlow module on this host. Set EITHER this OR the per-module key above.]]></comment>
+                    <config_path>etechflow_bundle/license/license_key</config_path>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                    <comment><![CDATA[
-                        <code>sk_test_...</code> or <code>sk_live_...</code>. Stored encrypted by Magento.
-                    ]]></comment>
-                </field>
-
-                <field id="stripe_publishable_key" translate="label" type="text"
-                       sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
-                    <label>Stripe Publishable Key</label>
-                    <comment><![CDATA[
-                        <code>pk_test_...</code> or <code>pk_live_...</code>. Public — safe to display.
-                    ]]></comment>
-                </field>
-
-                <field id="stripe_currency" translate="label" type="text"
-                       sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
-                    <label>Currency</label>
-                    <comment><![CDATA[Three-letter Stripe currency code, lowercase. Default: <code>usd</code>.]]></comment>
                 </field>
             </group>
 

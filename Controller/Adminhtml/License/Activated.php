@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace Etechflow\OptionsPlugin\Controller\Adminhtml\License;
 
+use Etechflow\OptionsPlugin\Model\LicenseValidator;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
-use Magento\Framework\App\Cache\TypeListInterface;
-use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Cache\Type\Config as ConfigCacheType;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
+use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
-use Magento\Framework\Encryption\EncryptorInterface;
-use Magento\Framework\HTTP\Client\Curl;
+use Magento\Framework\HTTP\Client\CurlFactory;
 use Magento\Framework\View\Result\PageFactory;
 
 /**
- * Stripe success_url target. Verifies the paid session with the portal, mints
- * an SP-XXXX key, saves it, and renders the success page.
+ * Landing page after payment. Calls the eTechFlow portal to activate the
+ * subscription, gets the license key, saves it to config, and shows success.
  */
 class Activated extends Action
 {
@@ -24,12 +25,11 @@ class Activated extends Action
 
     public function __construct(
         Context $context,
-        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly PageFactory $pageFactory,
+        private readonly CurlFactory $curlFactory,
         private readonly WriterInterface $configWriter,
-        private readonly TypeListInterface $cacheTypeList,
-        private readonly Curl $curl,
-        private readonly EncryptorInterface $encryptor,
-        private readonly PageFactory $resultPageFactory
+        private readonly CacheInterface $cache,
+        private readonly LicenseValidator $licenseValidator
     ) {
         parent::__construct($context);
     }
@@ -37,119 +37,68 @@ class Activated extends Action
     public function execute(): ResultInterface
     {
         $sessionId = trim((string) $this->getRequest()->getParam('session_id', ''));
-        $plan      = trim((string) $this->getRequest()->getParam('plan',      ''));
-        $domain    = trim((string) $this->getRequest()->getParam('domain',    ''));
-        $name      = trim((string) $this->getRequest()->getParam('name',      ''));
-        $email     = trim((string) $this->getRequest()->getParam('email',     ''));
+        $subId     = trim((string) $this->getRequest()->getParam('sub_id', ''));
+        $plan      = trim((string) $this->getRequest()->getParam('plan', ''));
+        $domain    = trim((string) $this->getRequest()->getParam('domain', '')) ?: $this->licenseValidator->getCurrentHost();
+        $name      = trim((string) $this->getRequest()->getParam('name', ''));
+        $email     = trim((string) $this->getRequest()->getParam('email', ''));
 
-        $page = $this->resultPageFactory->create();
-        $page->getConfig()->getTitle()->set('License Activated');
-
-        if ($sessionId === '' || !preg_match('/^cs_[a-zA-Z0-9_]+$/', $sessionId)) {
-            $page->getLayout()->getBlock('etechflow.eo.license.activated')
-                ->setData('error', 'Missing or invalid Stripe session_id in callback URL.');
-            return $page;
+        if (!$sessionId) {
+            $this->messageManager->addErrorMessage(__('Invalid payment callback.'));
+            return $this->resultFactory->create(ResultFactory::TYPE_REDIRECT)->setPath('efopt/license/gate');
         }
 
-        $stripeKey = $this->getStripeSecretKey();
-        if ($stripeKey === '') {
-            $page->getLayout()->getBlock('etechflow.eo.license.activated')
-                ->setData('error', 'Stripe secret key not configured.');
-            return $page;
-        }
+        $payload = json_encode(array_filter([
+            'session_id' => $sessionId,
+            'sub_id'     => $subId ?: null,
+            'domain'     => $domain,
+            'name'       => $name,
+            'email'      => $email,
+            'plan'       => $plan,
+        ]));
 
-        $portalUrl = $this->getPortalUrl();
-        if ($portalUrl === '') {
-            $page->getLayout()->getBlock('etechflow.eo.license.activated')
-                ->setData('error', 'Portal URL not configured.');
-            return $page;
-        }
-
-        $portalBase = str_replace('/license/validate', '', $portalUrl);
-
-        $result = $this->callPortalActivate($portalBase, $sessionId, $stripeKey, $domain, $name, $email, $plan);
-        if (!empty($result['error'])) {
-            $page->getLayout()->getBlock('etechflow.eo.license.activated')
-                ->setData('error', $result['error']);
-            return $page;
-        }
-
-        $licenseKey = (string) ($result['license_key'] ?? '');
-        if ($licenseKey === '') {
-            $page->getLayout()->getBlock('etechflow.eo.license.activated')
-                ->setData('error', 'Portal did not return a license_key.');
-            return $page;
-        }
-
-        $this->configWriter->save('etechflow_options/license/license_key',        $licenseKey);
-        $this->configWriter->save('etechflow_options/license/issued_key',         $licenseKey);
-        $this->configWriter->save('etechflow_options/license/issued_at',          (string) time());
-        $this->configWriter->save('etechflow_options/license/issued_domain',      $domain);
-        $this->configWriter->save('etechflow_options/license/issued_plan',        $plan);
-        $this->configWriter->save('etechflow_options/license/stripe_session_id',  $sessionId);
-        $this->configWriter->save('etechflow_options/license/revoked',            '0');
-        $this->configWriter->save('etechflow_options/license/ip_blocked',         '0');
-        $this->cacheTypeList->cleanType('config');
-
-        $page->getLayout()->getBlock('etechflow.eo.license.activated')
-            ->setData('license_key',    $licenseKey)
-            ->setData('plan',           $plan)
-            ->setData('settings_url',   (string) $this->getUrl('adminhtml/system_config/edit', ['section' => 'etechflow_options']))
-            ->setData('management_url', (string) $this->getUrl('efopt/license/gate'));
-
-        return $page;
-    }
-
-    private function getStripeSecretKey(): string
-    {
-        $raw = trim((string) $this->scopeConfig->getValue('etechflow_options/payment/stripe_secret_key'));
-        if ($raw === '') return '';
-        if (preg_match('/^\d+:\d+:/', $raw)) {
-            return trim($this->encryptor->decrypt($raw));
-        }
-        return $raw;
-    }
-
-    private function getPortalUrl(): string
-    {
-        $api = trim((string) $this->scopeConfig->getValue('etechflow_options/license/portal_api_url'));
-        if ($api !== '') return $api;
-        return trim((string) $this->scopeConfig->getValue('etechflow_options/license/portal_url'));
-    }
-
-    private function callPortalActivate(
-        string $portalBase, string $sessionId, string $stripeKey,
-        string $domain, string $name, string $email, string $plan
-    ): array {
-        $url     = rtrim($portalBase, '/') . '/license/activate';
-        $payload = json_encode([
-            'session_id'        => $sessionId,
-            'stripe_secret_key' => $stripeKey,
-            'domain'            => $domain,
-            'name'              => $name,
-            'email'             => $email,
-            'plan'              => $plan,
-            'module'            => 'options-plugin',
-        ]);
+        $licenseKey = '';
+        $planName   = '';
+        $error      = '';
 
         try {
-            $this->curl->setOption(CURLOPT_SSL_VERIFYPEER, false);
-            $this->curl->setOption(CURLOPT_RETURNTRANSFER, true);
-            $this->curl->setTimeout(15);
-            $this->curl->addHeader('Content-Type', 'application/json');
-            $this->curl->addHeader('Accept', 'application/json');
-            $this->curl->addHeader('User-Agent', 'ETechFlow-EO/1.0');
-            $this->curl->post($url, $payload);
-
-            $body   = $this->curl->getBody();
-            $status = $this->curl->getStatus();
+            $curl = $this->curlFactory->create();
+            $curl->setTimeout(25);
+            $curl->addHeader('Content-Type', 'application/json');
+            $curl->addHeader('Accept', 'application/json');
+            $curl->addHeader('X-ETF-License-Token', 'lcsk_8f3b9d2a7c14e605b9af2e7c1d8043f6');
+            $curl->post('https://module.etechflow.com/api/license/result', $payload);
+            $status = (int) $curl->getStatus();
+            $body   = (string) $curl->getBody();
             $data   = json_decode($body, true);
-            if ($status !== 200 || !is_array($data)) {
-                return ['error' => 'Portal returned HTTP ' . $status . ': ' . substr((string)$body, 0, 300)];
+
+            if ($status === 200 && !empty($data['license_key'])) {
+                $licenseKey = (string) $data['license_key'];
+                $planName   = (string) ($data['plan'] ?? $plan);
+            } else {
+                $error = is_array($data) && !empty($data['error']) ? $data['error'] : ('Portal returned status ' . $status . ': ' . $body);
             }
-            return $data;
         } catch (\Throwable $e) {
-            return ['error' => 'Portal call failed: ' . $e->getMessage()];
+            $error = 'Could not reach portal: ' . $e->getMessage();
         }
+
+        if ($licenseKey) {
+            $this->configWriter->save(LicenseValidator::XML_PATH_LICENSE_KEY, $licenseKey);
+            $this->cache->clean([ConfigCacheType::CACHE_TAG]);
+        }
+
+        $page = $this->pageFactory->create();
+        $page->getConfig()->getTitle()->prepend(__('Subscription Activated'));
+
+        $block = $page->getLayout()->getBlock('etechflow.eo.license.activated');
+        if ($block) {
+            $block->setData('license_key', $licenseKey)
+                  ->setData('plan', $planName)
+                  ->setData('error', $error)
+                  ->setData('settings_url', $this->getUrl('adminhtml/system_config/edit', ['section' => 'etechflow_options']))
+                  ->setData('management_url', $this->getUrl('efopt/license/gate'));
+        }
+
+        return $page;
     }
 }

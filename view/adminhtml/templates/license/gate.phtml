@@ -1,204 +1,213 @@
 <?php
-/* eTechFlow-lock-notice: show suspended/blocked message instead of purchase plans */
+/* eTechFlow lock-notice (MAIN-SETTING banner). When the licence for THIS domain is
+ * suspended / expired (subscription ended) / blocked (IP or admin block), show a
+ * styled notice on the module's License page instead of the purchase plans. The
+ * licence key is NEVER removed here — the module is only frozen — so access restores
+ * automatically once the portal clears the state. The Stores > Configuration page is
+ * never gated, so the merchant can still reach it to paste/replace a key. */
 try {
-    $etfTmpl = method_exists($block, 'getTemplate') ? (string) $block->getTemplate() : '';
-    $etfMod = $etfTmpl ? explode('::', $etfTmpl)[0] : '';
+    $etfTmpl    = method_exists($block, 'getTemplate') ? (string) $block->getTemplate() : '';
+    $etfMod     = $etfTmpl ? explode('::', $etfTmpl)[0] : '';
     $etfLvClass = $etfMod ? (str_replace('_', '\\', $etfMod) . '\\Model\\LicenseValidator') : '';
     if ($etfLvClass !== '' && class_exists($etfLvClass)) {
         $etfOm = \Magento\Framework\App\ObjectManager::getInstance();
         $etfLv = $etfOm->get($etfLvClass);
-        $etfDomain = method_exists($etfLv, 'getCurrentHost') ? (string) $etfLv->getCurrentHost() : '';
-        $etfKey = '';
-        if (defined($etfLvClass . '::XML_PATH_LICENSE_KEY')) {
-            $etfSc = $etfOm->get(\Magento\Framework\App\Config\ScopeConfigInterface::class);
-            $etfKey = trim((string) $etfSc->getValue(constant($etfLvClass . '::XML_PATH_LICENSE_KEY')));
-        }
-        if ($etfDomain !== '') {
-            $etfUrl = 'https://license-service.etechflow.com/license/status?platform=magento&domain='
-                . urlencode($etfDomain) . ($etfKey !== '' ? '&license_key=' . urlencode($etfKey) : '');
-            $etfCurl = $etfOm->create(\Magento\Framework\HTTP\Client\Curl::class);
-            $etfCurl->setTimeout(8);
-            $etfCurl->get($etfUrl);
-            $etfData = json_decode((string) $etfCurl->getBody(), true);
-            $etfState = is_array($etfData) ? ($etfData['state'] ?? '') : '';
-            if ($etfState === 'blocked' || $etfState === 'suspended') {
-                $etfMsg = (is_array($etfData) && !empty($etfData['message'])) ? $etfData['message']
-                    : 'Access to this module has been disabled by the administrator. Please contact support@etechflow.com to restore access.';
-                $etfTitle = $etfState === 'suspended' ? 'Module access suspended' : 'Module access blocked';
-                echo '<div style="max-width:640px;margin:64px auto;padding:36px;border:1px solid #7f1d1d;border-radius:14px;background:#1b0d0d;color:#f3d6d6;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;text-align:center;">'
-                   . '<div style="font-size:46px;line-height:1;">&#9888;</div>'
-                   . '<h2 style="color:#fff;margin:14px 0 8px;font-size:22px;">' . htmlspecialchars($etfTitle) . '</h2>'
-                   . '<p style="font-size:15px;line-height:1.6;margin:0 auto;max-width:520px;">' . htmlspecialchars($etfMsg) . '</p>'
-                   . '<p style="margin-top:20px;font-size:14px;">Contact <a href="mailto:support@etechflow.com" style="color:#ff8a8a;text-decoration:underline;">support@etechflow.com</a> to restore access.</p>'
-                   . '</div>';
-                return;
+
+        // Prefer the validator's own read-only state reader (getLicenseState); fall
+        // back to a direct /license/status call for older modules without it.
+        $etfState = '';
+        if (method_exists($etfLv, 'getLicenseState')) {
+            $etfState = (string) $etfLv->getLicenseState();
+        } elseif (method_exists($etfLv, 'getCurrentHost')) {
+            $etfDomain = (string) $etfLv->getCurrentHost();
+            if ($etfDomain !== '') {
+                $etfKey = '';
+                if (defined($etfLvClass . '::XML_PATH_LICENSE_KEY')) {
+                    $etfSc  = $etfOm->get(\Magento\Framework\App\Config\ScopeConfigInterface::class);
+                    $etfKey = trim((string) $etfSc->getValue(constant($etfLvClass . '::XML_PATH_LICENSE_KEY')));
+                }
+                $etfUrl  = 'https://license-service.etechflow.com/license/status?platform=magento&domain='
+                    . urlencode($etfDomain) . ($etfKey !== '' ? '&license_key=' . urlencode($etfKey) : '');
+                $etfCurl = $etfOm->create(\Magento\Framework\HTTP\Client\Curl::class);
+                $etfCurl->setTimeout(8);
+                $etfCurl->get($etfUrl);
+                $etfData  = json_decode((string) $etfCurl->getBody(), true);
+                $etfState = is_array($etfData)
+                    ? (!empty($etfData['ip_blocked']) ? 'blocked' : (string) ($etfData['state'] ?? ''))
+                    : '';
             }
+        }
+
+        // One styled notice per blocking state — the licence key stays put in all of them.
+        $etfNotices = [
+            'suspended' => [
+                'Module access suspended',
+                'Your licence for this domain has been suspended by the administrator. Please contact support@etechflow.com to restore access.',
+            ],
+            'expired' => [
+                'Subscription ended',
+                'Your subscription for this domain has ended. Please renew, or contact support@etechflow.com to restore access.',
+            ],
+            'blocked' => [
+                'Module access blocked',
+                'Access to this module has been blocked for this server (its IP is not authorised). Please contact support@etechflow.com to restore access.',
+            ],
+        ];
+        if (isset($etfNotices[$etfState])) {
+            [$etfTitle, $etfMsg] = $etfNotices[$etfState];
+            echo '<div style="max-width:640px;margin:64px auto;padding:36px;border:1px solid #7f1d1d;border-radius:14px;background:#1b0d0d;color:#f3d6d6;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;text-align:center;">'
+               . '<div style="font-size:46px;line-height:1;">&#9888;</div>'
+               . '<h2 style="color:#fff;margin:14px 0 8px;font-size:22px;">' . htmlspecialchars($etfTitle) . '</h2>'
+               . '<p style="font-size:15px;line-height:1.6;margin:0 auto;max-width:520px;">' . htmlspecialchars($etfMsg) . '</p>'
+               . '<p style="margin-top:20px;font-size:14px;">Contact <a href="mailto:support@etechflow.com" style="color:#ff8a8a;text-decoration:underline;">support@etechflow.com</a> to restore access.</p>'
+               . '</div>';
+            return;
         }
     }
 } catch (\Throwable $etfE) { /* fail open: render the normal gate */ }
 ?>
 <?php
-/** @var \Etechflow\OptionsPlugin\Block\Adminhtml\License\Gate $block */
-$stripeConfigured = $block->isStripeConfigured();
-$portalConfigured = $block->isPortalConfigured();
-$domain           = $block->escapeHtml($block->getCurrentDomain());
-$checkoutUrl      = $block->escapeUrl($block->getCheckoutUrl());
-$configUrl        = $block->escapeUrl($block->getConfigUrl());
-$formKey          = $block->escapeHtml($block->getFormKey());
+/**
+ * @var \Magento\Backend\Block\Template $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+$settingsUrl = $block->getUrl('adminhtml/system_config/edit/section/etechflow_options');
+$checkoutUrl = $block->getUrl('efopt/license/checkout');
+$plansUrl = (string) $block->getData('plans_url');
 ?>
 <style>
-.etf-gate{background:#0d1b2a;color:#e8edf2;border-radius:12px;padding:36px 44px;margin:20px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;}
-.etf-gate .tag{display:inline-block;background:#1e3a8a;color:#60a5fa;padding:4px 14px;border-radius:14px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;}
-.etf-gate h1{font-size:36px;margin:18px 0 8px;color:#fff;font-weight:600;letter-spacing:-.02em;text-align:center;}
-.etf-gate .sub{color:#93a1bd;text-align:center;font-size:14px;max-width:540px;margin:0 auto 28px;line-height:1.55;}
-.etf-gate .head{text-align:center;}
-.etf-gate .actions{text-align:center;margin-bottom:32px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;}
-.etf-gate .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;cursor:pointer;border:1px solid transparent;}
-.etf-gate .btn-primary{background:#3b82f6;color:#fff;}
-.etf-gate .btn-primary:hover{background:#60a5fa;color:#fff;}
-.etf-gate .btn-ghost{background:transparent;border-color:#2b3a5a;color:#e8edf2;}
-.etf-gate .btn-ghost:hover{background:#18243a;color:#fff;}
-.etf-gate .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:18px;}
-.etf-gate .plan{background:#131c2e;border:1px solid #1f2c47;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:12px;position:relative;transition:transform .15s,border-color .15s;}
-.etf-gate .plan:hover{transform:translateY(-2px);border-color:#3b82f6;}
-.etf-gate .plan.popular{border-color:#3b82f6;}
-.etf-gate .plan-popular-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#3b82f6;color:#fff;padding:3px 12px;border-radius:10px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;}
-.etf-gate .plan-name{font-size:18px;font-weight:600;color:#fff;}
-.etf-gate .plan-desc{color:#93a1bd;font-size:13px;line-height:1.5;}
-.etf-gate ul.plan-features{list-style:none;padding:0;margin:0;flex:1;}
-.etf-gate ul.plan-features li{padding:5px 0;font-size:13px;color:#cbd5e1;}
-.etf-gate ul.plan-features li::before{content:"\2713";color:#22c55e;margin-right:8px;font-weight:700;}
-.etf-gate .plan-cta{background:#3b82f6;color:#fff;border:0;padding:11px;border-radius:7px;font-weight:600;cursor:pointer;font-size:14px;text-decoration:none;display:block;text-align:center;}
-.etf-gate .plan-cta:hover{background:#60a5fa;color:#fff;}
-.etf-gate .form{display:none;background:#0a101c;border:1px solid #2b3a5a;border-radius:10px;padding:24px;margin:20px auto 0;max-width:480px;}
-.etf-gate .form.show{display:block;}
-.etf-gate .form label{display:block;color:#93a1bd;font-size:12px;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.05em;}
-.etf-gate .form input{width:100%;background:#0d1b2a;border:1px solid #2b3a5a;color:#fff;padding:10px 12px;border-radius:6px;font-size:14px;}
-.etf-gate .form input:focus{outline:none;border-color:#3b82f6;}
-.etf-gate .form .pay{background:#635bff;color:#fff;font-weight:700;padding:12px 20px;border-radius:6px;border:0;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:16px;}
-.etf-gate .form .pay:hover{background:#7c75ff;}
-.etf-gate .form .pay::before{content:"\1F4B3";font-size:18px;}
-.etf-gate .form .err{background:rgba(239,68,68,.1);border:1px solid #7f1d1d;border-radius:6px;color:#ef4444;padding:10px 14px;margin-bottom:10px;font-size:13px;display:none;}
-.etf-gate .warn-cfg{background:rgba(245,158,11,.06);border:1px solid #78350f;border-radius:8px;padding:14px 18px;margin-bottom:24px;color:#f59e0b;font-size:13px;}
-.etf-gate .domain-tag{font-family:monospace;background:rgba(255,255,255,.04);padding:3px 8px;border-radius:4px;border:1px solid #1f2c47;color:#60a5fa;}
-.etf-gate .stripe-badge{font-size:11px;color:#93a1bd;text-align:center;margin-top:12px;}
-.etf-gate .stripe-badge strong{color:#635bff;}
+.etf-gate { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#0d1b2a; min-height:100vh; padding:32px 16px; color:#e8edf2; }
+.etf-gate-hdr { text-align:center; margin-bottom:32px; }
+.etf-badge { display:inline-block; background:linear-gradient(135deg,#1a73e8,#0d5fc4); color:#fff; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:3px 12px; border-radius:20px; margin-bottom:12px; }
+.etf-gate-hdr h1 { font-size:26px; font-weight:700; color:#fff; margin:0 0 6px; }
+.etf-gate-hdr p { color:#8fa3b8; font-size:14px; margin:0 auto; max-width:520px; }
+.etf-top-cta { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:24px auto 32px; max-width:480px; }
+.etf-btn { display:inline-flex; align-items:center; gap:7px; padding:11px 24px; border-radius:8px; font-size:14px; font-weight:600; text-decoration:none; cursor:pointer; transition:opacity .15s; border:none; }
+.etf-btn:hover { opacity:.85; }
+.etf-btn-primary { background:linear-gradient(135deg,#1a73e8,#0d5fc4); color:#fff; }
+.etf-btn-ghost { background:transparent; border:1px solid #2a3f55; color:#93c5fd; }
+.etf-plans { display:flex; flex-wrap:wrap; gap:18px; justify-content:center; max-width:980px; margin:0 auto 32px; }
+.etf-plan { background:#1a2a3a; border:1px solid #2a3f55; border-radius:12px; padding:24px 20px; width:276px; position:relative; transition:border-color .2s,transform .2s; }
+.etf-plan:hover { border-color:#1a73e8; transform:translateY(-2px); }
+.etf-plan.featured { border-color:#1a73e8; background:linear-gradient(135deg,#1a2a3a,#0f2040); }
+.etf-plan.featured::before { content:'MOST POPULAR'; position:absolute; top:-11px; left:50%; transform:translateX(-50%); background:#1a73e8; color:#fff; font-size:9px; font-weight:700; letter-spacing:1.5px; padding:2px 10px; border-radius:10px; }
+.etf-plan-name { font-size:17px; font-weight:700; color:#fff; margin-bottom:4px; }
+.etf-plan-price { font-size:28px; font-weight:800; color:#1a73e8; margin-bottom:3px; }
+.etf-plan-price span { font-size:13px; font-weight:400; color:#8fa3b8; }
+.etf-plan-desc { font-size:11px; color:#8fa3b8; margin-bottom:14px; min-height:28px; }
+.etf-plan-feat { list-style:none; margin:0 0 16px; padding:0; }
+.etf-plan-feat li { font-size:12px; color:#c8d8e8; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.05); display:flex; align-items:center; gap:7px; }
+.etf-plan-feat li::before { content:'\2713'; color:#34d399; font-weight:700; flex-shrink:0; }
+.etf-plan-btn { width:100%; padding:10px; border-radius:6px; font-size:13px; font-weight:600; background:linear-gradient(135deg,#1a73e8,#0d5fc4); color:#fff; border:none; cursor:pointer; transition:opacity .15s; }
+.etf-plan-btn:hover { opacity:.88; }
+.etf-form-wrap { display:none; max-width:420px; margin:0 auto 24px; background:#1a2a3a; border:1px solid #2a3f55; border-radius:12px; padding:24px; }
+.etf-form-wrap.active { display:block; }
+.etf-form-wrap h3 { margin:0 0 16px; font-size:16px; color:#fff; }
+.etf-form-wrap label { display:block; font-size:12px; color:#8fa3b8; margin-bottom:4px; margin-top:12px; }
+.etf-form-wrap input { width:100%; padding:9px 12px; background:#0d1b2a; border:1px solid #2a3f55; border-radius:6px; color:#e8edf2; font-size:13px; box-sizing:border-box; }
+.etf-form-wrap input:focus { outline:none; border-color:#1a73e8; }
+.etf-plan-tag { display:inline-block; background:rgba(26,115,232,.15); border:1px solid rgba(26,115,232,.3); color:#93c5fd; font-size:11px; padding:2px 8px; border-radius:4px; margin-bottom:10px; }
+.etf-form-submit { margin-top:16px; width:100%; padding:11px; border-radius:6px; font-size:14px; font-weight:600; background:linear-gradient(135deg,#1a73e8,#0d5fc4); color:#fff; border:none; cursor:pointer; }
+.etf-form-submit:hover { opacity:.88; }
+.etf-back-link { display:block; text-align:center; margin-top:10px; color:#8fa3b8; font-size:12px; cursor:pointer; }
+.etf-back-link:hover { color:#93c5fd; }
 </style>
 
 <div class="etf-gate">
-    <div class="head">
-        <span class="tag">eTechFlow Module</span>
-        <h1>Extra Options Plugin</h1>
-        <p class="sub">A valid license is required to use the Option-Templates, Bulk-Price and Migration tools. Pay by card and your license key is generated instantly. (Your storefront and existing product options are not affected by this gate.)</p>
-    </div>
+  <div class="etf-gate-hdr">
+    <div class="etf-badge">eTechFlow Module</div>
+    <h1>Extra Options Plugin</h1>
+    <p>A valid license is required to use the admin Option Templates, Bulk Price Update and Migration tools. Pay by card and your license key is generated instantly — the admin tools unlock the moment your key validates. Your existing storefront product options are never affected.</p>
+  </div>
 
-    <?php if (!$portalConfigured): ?>
-    <div class="warn-cfg">
-        <strong>License Portal URL is not set.</strong> Go to
-        <a href="<?= $configUrl ?>" style="color:#f59e0b;text-decoration:underline;">Configuration &rarr; License</a>
-        and set <strong>License Portal URL</strong>.
-    </div>
-    <?php endif; ?>
+  <div class="etf-top-cta">
+    <button class="etf-btn etf-btn-primary" onclick="document.getElementById('etf-plans-section').scrollIntoView({behavior:'smooth'})">
+      &#128179; Select Plan &amp; Pay
+    </button>
+    <a href="<?= $escaper->escapeUrl($settingsUrl); ?>" class="etf-btn etf-btn-ghost">
+      &#128273; Enter License Key
+    </a>
+  </div>
 
-    <?php if (!$stripeConfigured): ?>
-    <div class="warn-cfg">
-        <strong>Stripe is not configured.</strong> Go to
-        <a href="<?= $configUrl ?>" style="color:#f59e0b;text-decoration:underline;">Configuration &rarr; Payment (Stripe)</a>
-        and add your <strong>Stripe Secret Key</strong> + <strong>Publishable Key</strong> to enable "Select Plan &amp; Pay".
-    </div>
-    <?php endif; ?>
+  <div id="etf-plans-section" class="etf-plans">
+    <div id="etf-plans-loading" style="color:#8fa3b8;font-size:13px;padding:20px;">Loading purchase options…</div>
+  </div>
 
-    <div class="actions">
-        <a href="#etf-plans" class="btn btn-primary" onclick="document.getElementById('etf-plans').scrollIntoView({behavior:'smooth'});return false;">Select Plan &amp; Pay</a>
-        <a href="<?= $configUrl ?>" class="btn btn-ghost">Enter License Key Manually</a>
-    </div>
-
-    <div id="etf-plans" class="plans">
-        <div class="plan">
-            <div class="plan-name">Starter</div>
-            <div class="plan-desc">Single store, core option templates</div>
-            <ul class="plan-features">
-                <li>Reusable option templates</li>
-                <li>Per-product apply</li>
-                <li>File upload &amp; soft-required</li>
-                <li>Themed option cards</li>
-                <li>One store, one domain</li>
-            </ul>
-            <button type="button" class="plan-cta" onclick="etfShowForm('eo_starter','Starter')">Get Starter</button>
-        </div>
-
-        <div class="plan popular">
-            <div class="plan-popular-badge">Most Popular</div>
-            <div class="plan-name">Professional</div>
-            <div class="plan-desc">Multi-store with per-category apply + bulk tools</div>
-            <ul class="plan-features">
-                <li>Everything in Starter</li>
-                <li>Per-category apply</li>
-                <li>Bulk price update tool</li>
-                <li>Conditional sub-fields</li>
-                <li>Up to 3 stores</li>
-            </ul>
-            <button type="button" class="plan-cta" onclick="etfShowForm('eo_professional','Professional')">Get Professional</button>
-        </div>
-
-        <div class="plan">
-            <div class="plan-name">Enterprise</div>
-            <div class="plan-desc">Unlimited stores + migration + SLA</div>
-            <ul class="plan-features">
-                <li>Everything in Professional</li>
-                <li>Migration tool from keyword config</li>
-                <li>Unlimited stores / domains</li>
-                <li>SLA-backed support</li>
-                <li>Versioned config rollback</li>
-            </ul>
-            <button type="button" class="plan-cta" onclick="etfShowForm('eo_enterprise','Enterprise')">Get Enterprise</button>
-        </div>
-    </div>
-
-    <form id="etf-form" class="form" method="post" action="<?= $checkoutUrl ?>">
-        <input type="hidden" name="form_key" value="<?= $formKey ?>"/>
-        <input type="hidden" name="plan" id="etf-plan-input" value=""/>
-        <h3 id="etf-plan-label" style="color:#fff;margin-bottom:14px;font-size:16px;">Selected: &mdash;</h3>
-        <div class="err" id="etf-err"></div>
-        <label>Your name</label>
-        <input type="text" name="name" required placeholder="Jane Smith"/>
-        <label>Your email</label>
-        <input type="email" name="email" required placeholder="jane@yourshop.com"/>
-        <div style="margin-top:14px;font-size:12px;color:#93a1bd;">
-            License will be bound to domain: <span class="domain-tag"><?= $domain ?></span>
-        </div>
-        <button type="submit" class="pay" id="etf-pay-btn">Pay with Stripe</button>
-        <div class="stripe-badge">Secured by <strong>Stripe</strong> &mdash; test card <code>4242 4242 4242 4242</code></div>
+  <div id="etf-checkout-form" class="etf-form-wrap">
+    <h3>&#128179; Complete your purchase</h3>
+    <div id="etf-plan-tag" class="etf-plan-tag"></div>
+    <p style="font-size:12px;color:#8fa3b8;margin:0 0 4px;">
+      You will be redirected to our secure checkout. Your license key is generated automatically after payment.
+    </p>
+    <form method="post" action="<?= $escaper->escapeUrl($checkoutUrl); ?>" id="etf-pay-form">
+      <?= /* @noEscape */ $block->getBlockHtml('formkey'); ?>
+      <input type="hidden" name="plan" id="etf-plan-input" value="">
+      <label for="etf-name">Full name <span style="color:#c00">*</span></label>
+      <input type="text" name="name" id="etf-name" placeholder="Your name" required maxlength="120">
+      <label for="etf-email">Email address <span style="color:#c00">*</span></label>
+      <input type="email" name="email" id="etf-email" placeholder="you@yourstore.com" required maxlength="255">
+      <button type="submit" class="etf-form-submit">&#128179; Pay by card &rarr;</button>
     </form>
+    <span class="etf-back-link" onclick="document.getElementById('etf-checkout-form').classList.remove('active')">
+      &larr; Back to plans
+    </span>
+  </div>
 </div>
 
 <script>
-function etfShowForm(plan, label) {
-    document.getElementById('etf-plan-input').value = plan;
-    document.getElementById('etf-plan-label').textContent = 'Selected: ' + label;
-    document.getElementById('etf-form').classList.add('show');
-    document.getElementById('etf-form').scrollIntoView({behavior:'smooth', block:'center'});
-}
+var ETF_PLANS_URL = <?= /* @noEscape */ json_encode($plansUrl); ?>;
 
-document.getElementById('etf-form').addEventListener('submit', function(e){
-    e.preventDefault();
-    var form = e.target;
-    var errBox = document.getElementById('etf-err');
-    errBox.style.display = 'none';
-    var fd = new FormData(form);
-    fetch(form.action, {method:'POST', body: fd})
-        .then(function(r){ return r.json(); })
-        .then(function(data){
-            if (data.url) {
-                window.location.href = data.url;
-            } else {
-                errBox.textContent = data.error || 'Unknown error';
-                errBox.style.display = 'block';
-            }
-        })
-        .catch(function(err){
-            errBox.textContent = 'Network error: ' + err.message;
-            errBox.style.display = 'block';
-        });
-});
+function etfShowForm(planKey, planName, planPrice) {
+    document.getElementById('etf-plan-input').value = planKey;
+    document.getElementById('etf-plan-tag').textContent = planName + ' — ' + planPrice;
+    var form = document.getElementById('etf-checkout-form');
+    form.classList.add('active');
+    form.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function etfEsc(s){ var d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
+function etfFeatList(text){
+    if(!text) return '';
+    var t = String(text).replace(/^[^—-]*[—-]\s*/, '');
+    var parts = t.split(/,\s*/).filter(function(x){return x.trim();});
+    if(!parts.length) return '';
+    return '<ul class="etf-plan-feat">' + parts.slice(0,6).map(function(p){return '<li>'+etfEsc(p.trim())+'</li>';}).join('') + '</ul>';
+}
+function etfRenderPlans(data){
+    var wrap = document.getElementById('etf-plans-section');
+    var plans = (data && data.plans) || [];
+    if(!plans.length){ etfPlansError(); return; }
+    var oneTime = (data.mode === 'one_time');
+    var html = '';
+    plans.forEach(function(p){
+        var featured = (!oneTime && p.period === 'monthly');
+        var periodTitle = oneTime ? (p.name || 'Lifetime License')
+                          : ({week:'Weekly',month:'Monthly',year:'Yearly'}[p.period_label] || etfEsc(p.name));
+        var desc = oneTime ? 'Pay once — license never expires.'
+                          : ({week:'Billed weekly.',month:'Billed monthly.',year:'Best value — 2 months free.'}[p.period_label] || '');
+        var unit = oneTime ? ' once' : ('/' + etfEsc(p.period_label));
+        var priceDisp = '$' + p.price + (oneTime ? ' once' : '/' + p.period_label);
+        var badge = oneTime ? '<div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#7c3aed;color:#fff;font-size:9px;font-weight:700;letter-spacing:1.5px;padding:2px 10px;border-radius:10px;">LIFETIME</div>' : '';
+        html += '<div class="etf-plan'+(featured?' featured':'')+'" style="position:relative;">'
+              + badge
+              + '<div class="etf-plan-name">'+etfEsc(periodTitle)+'</div>'
+              + '<div class="etf-plan-price">$'+etfEsc(p.price)+'<span>'+unit+'</span></div>'
+              + '<div class="etf-plan-desc">'+etfEsc(desc)+'</div>'
+              + etfFeatList(p.features)
+              + '<button class="etf-plan-btn" data-slug="'+etfEsc(p.slug)+'" data-name="'+etfEsc(periodTitle)+'" data-price="'+etfEsc(priceDisp)+'">Get '+etfEsc(periodTitle)+'</button>'
+              + '</div>';
+    });
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('.etf-plan-btn').forEach(function(b){
+        b.addEventListener('click', function(){ etfShowForm(b.dataset.slug, b.dataset.name, b.dataset.price); });
+    });
+}
+function etfPlansError(){
+    document.getElementById('etf-plans-section').innerHTML =
+      '<div style="color:#8fa3b8;font-size:13px;padding:16px;">Plans are temporarily unavailable. Use <strong>Enter License Key</strong> above.</div>';
+}
+(function(){
+    if(!ETF_PLANS_URL){ etfPlansError(); return; }
+    fetch(ETF_PLANS_URL, { headers:{ 'Accept':'application/json','ngrok-skip-browser-warning':'1' } })
+      .then(function(r){ return r.json(); }).then(etfRenderPlans).catch(etfPlansError);
+})();
 </script>
