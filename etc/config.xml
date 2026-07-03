@@ -4,6 +4,7 @@
     <default>
         <etechflow_options>
             <license>
+                <enforce_on_dev>0</enforce_on_dev>
                 <license_key></license_key>
                 <portal_url></portal_url>
                 <issued_key></issued_key>
