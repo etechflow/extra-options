@@ -69,13 +69,16 @@ class Templates extends AbstractModifier
                         'collapsible'  => true,
                         'opened'       => false,
                         'sortOrder'    => 100,
-                        // Product-form fields live under the `product` data scope. The
+                        // Product-form fields live under the `data.product` scope. The
                         // initial value is written to $data[$productId]['product'][...]
-                        // and ProductSaveAfter reads $product->getData('efopt_template_ids'),
-                        // so the fieldset must scope to `product` — otherwise the field
-                        // renders empty AND its value posts outside the product data,
-                        // so the observer never sees it (link never saves).
-                        'dataScope'    => 'product',
+                        // and ProductSaveAfter reads $product->getData('efopt_template_ids').
+                        // Must be the ABSOLUTE 'data.product' (not relative 'product'):
+                        // a fieldset added at the meta root doesn't inherit the form's
+                        // 'data' scope, so 'product' resolves to the wrong path — the
+                        // field renders empty AND its value posts outside the product
+                        // payload, so the save observer never sees it (link never saves).
+                        // Matches the proven Keystation_VehicleCompat product modifier.
+                        'dataScope'    => 'data.product',
                     ],
                 ],
             ],
