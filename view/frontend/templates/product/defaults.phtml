@@ -18,6 +18,48 @@ $mfJsSrc     = $block->getViewFileUrl('Etechflow_OptionsPlugin::js/efopt-multifi
     window.efoptConditionalFields = <?= /* @noEscape */ json_encode($vm->getConditionalFields()) ?>;
     window.efoptUploadUrl = <?= /* @noEscape */ json_encode($block->getUrl('etechflow/files/upload')) ?>;
 </script>
+<script>
+/* Etechflow_OptionsPlugin — option-label safety net (theme-agnostic).
+ * Some Hyva themes bind x-html on custom-option labels to inject the price; on
+ * certain themes that function throws for checkbox options, so Alpine renders the
+ * choice label as the literal string "undefined", wiping the correct server text
+ * (e.g. "Gift wrap"). This captures the good server-rendered label and restores it
+ * if a theme ever blanks/undefines it. No-op on themes that render correctly, and
+ * on Luma (no Alpine) it simply never triggers. */
+(function () {
+    'use strict';
+    var saved = new WeakMap(), busy = false;
+    function fix() {
+        if (busy) { return; }
+        busy = true;
+        try {
+            var labels = document.querySelectorAll(
+                'form[id^="product_addtocart_form"] label, .product-options-wrapper label, .product-custom-option label'
+            );
+            for (var i = 0; i < labels.length; i++) {
+                var l = labels[i], t = (l.textContent || '').replace(/\s+/g, ' ').trim();
+                if (!saved.has(l) && t && t !== 'undefined') {
+                    saved.set(l, l.innerHTML);                 // capture good server label
+                } else if ((t === 'undefined' || t === '') && saved.has(l)) {
+                    l.innerHTML = saved.get(l);                // restore if a theme blanked it
+                }
+            }
+        } catch (e) {} finally { busy = false; }
+    }
+    fix();                                                     // run early (before Alpine walks the DOM)
+    document.addEventListener('alpine:init', fix);
+    function start() {
+        fix();
+        try {
+            var root = document.querySelector('form[id^="product_addtocart_form"]') || document.body;
+            new MutationObserver(function () { if (!busy) { fix(); } })
+                .observe(root, { subtree: true, childList: true, characterData: true });
+        } catch (e) {}
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', start); }
+    else { start(); }
+})();
+</script>
 <script src="<?= $escaper->escapeUrl($jsSrc) ?>" defer></script>
 <script src="<?= $escaper->escapeUrl($themeJsSrc) ?>" defer></script>
 <script src="<?= $escaper->escapeUrl($condJsSrc) ?>" defer></script>
