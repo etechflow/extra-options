@@ -33,13 +33,6 @@
                     <comment><![CDATA[Paste your eTechFlow <code>SP-XXXX</code> subscription key (generated automatically after checkout) OR a per-module / bundle HMAC key. Leave blank if using a Bundle License Key. Then Save Config and flush the cache to activate. Bound to your domain (<code>www.</code> normalised).]]></comment>
                 </field>
 
-                <field id="enforce_on_dev" translate="label comment" type="select"
-                       sortOrder="12" showInDefault="1" showInWebsite="0" showInStore="0">
-                    <label>Enforce Licence on This Domain</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment><![CDATA[By default, development / staging domains (hosts starting with dev., staging., stage., qa., uat., test., preview., sandbox.) run fully unlocked with NO licence. Set to <strong>Yes</strong> to require a valid licence here too — use this to validate your production licence on a dev / staging URL before go-live.]]></comment>
-                </field>
-
                 <field id="issued_key" translate="label comment" type="obscure"
                        sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Issued Key (auto)</label>
